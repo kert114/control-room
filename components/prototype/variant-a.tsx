@@ -32,7 +32,7 @@ export function VariantA({ model }: { model: KycPrototypeModel }) {
   const c = model.selectedCase;
 
   return (
-    <div className="flex min-h-[calc(100vh-3rem)]">
+    <div className="flex h-[calc(100vh-6rem)] overflow-hidden md:h-[calc(100vh-3rem)]">
       {/* left navigation rail */}
       <aside className="hidden w-48 shrink-0 flex-col justify-between border-r border-slate-800 bg-slate-900 p-3 text-slate-200 md:flex">
         <div>
@@ -66,12 +66,12 @@ export function VariantA({ model }: { model: KycPrototypeModel }) {
           </ul>
         </div>
         <div className="space-y-2 border-t border-slate-800 pt-3">
-          <ScenarioControls model={model} tone="dark" />
+          <ScenarioControls model={model} tone="dark" stack />
           <p className="text-[11px] text-slate-400">Synthetic demo data</p>
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* mobile header */}
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-300 bg-slate-900 p-2 text-slate-100 md:hidden">
           <span className="text-[13px] font-semibold">Control Room · KYC</span>

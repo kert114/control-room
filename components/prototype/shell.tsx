@@ -286,9 +286,11 @@ export function ActionButtons({
 export function ScenarioControls({
   model,
   tone = "light",
+  stack = false,
 }: {
   model: KycPrototypeModel;
   tone?: "light" | "dark";
+  stack?: boolean;
 }) {
   const selectCls =
     tone === "dark"
@@ -299,11 +301,11 @@ export function ScenarioControls({
       ? "text-[11px] uppercase tracking-wide text-slate-400"
       : "text-[11px] uppercase tracking-wide text-slate-500";
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <label className="flex items-center gap-1.5">
+    <div className={stack ? "flex flex-col gap-2" : "flex flex-wrap items-center gap-2"}>
+      <label className={stack ? "flex flex-col gap-0.5" : "flex items-center gap-1.5"}>
         <span className={labelCls}>Role</span>
         <select
-          className={selectCls}
+          className={`${selectCls} ${stack ? "w-full" : ""}`}
           value={model.role}
           onChange={(e) => model.setRole(e.target.value as never)}
         >
@@ -314,10 +316,10 @@ export function ScenarioControls({
           ))}
         </select>
       </label>
-      <label className="flex items-center gap-1.5">
+      <label className={stack ? "flex flex-col gap-0.5" : "flex items-center gap-1.5"}>
         <span className={labelCls}>Scenario</span>
         <select
-          className={selectCls}
+          className={`${selectCls} ${stack ? "w-full" : ""}`}
           value={model.scenario}
           onChange={(e) => model.setScenario(e.target.value as never)}
         >
@@ -453,7 +455,7 @@ export function PrototypeShell({
   }, [model]);
 
   return (
-    <div className="min-h-screen bg-slate-100 pb-16 text-slate-900">
+    <div className="min-h-screen bg-slate-100 pb-24 text-slate-900 md:pb-12">
       {children}
       <VariantSwitcher model={model} />
     </div>

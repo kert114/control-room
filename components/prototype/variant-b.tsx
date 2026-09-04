@@ -28,7 +28,7 @@ export function VariantB({ model }: { model: KycPrototypeModel }) {
   const c = model.selectedCase;
 
   return (
-    <div className="mx-auto max-w-[1400px] px-3 pb-24 md:pb-6">
+    <div className="mx-auto max-w-[1400px] px-3 pb-32 lg:pb-6">
       <header className="flex flex-wrap items-center gap-2 border-b border-slate-300 py-2">
         <span className="text-[13px] font-semibold text-slate-900">Control Room · Risk dossier</span>
         <span className="text-[11px] text-slate-500">Synthetic demo data</span>
@@ -62,8 +62,10 @@ export function VariantB({ model }: { model: KycPrototypeModel }) {
             {model.visibleCases.length} of {model.counts.total} cases
           </span>
         </div>
-        <details className="mt-2" open>
-          <summary className="cursor-pointer text-[12px] font-medium text-slate-800">Filters</summary>
+        <details className="mt-2">
+          <summary className="min-h-[36px] cursor-pointer py-1.5 text-[12px] font-medium text-slate-800">
+            Filters — risk, status, country, assignee, SLA
+          </summary>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <select
               aria-label="Filter by risk"
@@ -298,7 +300,7 @@ export function VariantB({ model }: { model: KycPrototypeModel }) {
           </aside>
 
           {/* mobile sticky action bar */}
-          <div className="fixed inset-x-0 bottom-12 z-30 border-t border-slate-300 bg-white p-2 lg:hidden">
+          <div className="fixed inset-x-0 bottom-24 z-30 border-t border-slate-300 bg-white p-2 md:bottom-12 lg:hidden">
             <ActionButtons model={model} size="sm" />
           </div>
         </div>

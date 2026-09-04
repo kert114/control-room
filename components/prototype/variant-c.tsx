@@ -40,7 +40,7 @@ export function VariantC({ model }: { model: KycPrototypeModel }) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-3rem)] bg-slate-100">
+    <div className="min-h-[calc(100vh-6rem)] bg-slate-100 md:min-h-[calc(100vh-3rem)]">
       <header className="border-b border-slate-800 bg-slate-900 text-slate-100">
         <div className="flex flex-wrap items-center gap-3 px-3 py-2">
           <span className="text-[13px] font-semibold text-white">Control Room</span>
@@ -261,13 +261,13 @@ export function VariantC({ model }: { model: KycPrototypeModel }) {
       {c && model.inspectorOpen && !model.isLoading && (
         <>
           <div
-            className="fixed inset-0 z-30 hidden bg-slate-900/20 md:block"
+            className="fixed inset-x-0 bottom-12 top-0 z-30 hidden bg-slate-900/20 md:block"
             onClick={closeInspector}
             aria-hidden
           />
           <aside
             aria-label="Case inspector"
-            className={`fixed inset-0 z-40 flex-col bg-white md:inset-y-0 md:left-auto md:right-0 md:flex md:w-[440px] md:border-l md:border-slate-300 md:shadow-xl ${
+            className={`fixed inset-x-0 bottom-24 top-0 z-40 flex-col bg-white md:bottom-12 md:left-auto md:right-0 md:flex md:w-[440px] md:border-l md:border-slate-300 md:shadow-xl ${
               mobileInspector ? "flex" : "hidden"
             }`}
           >
