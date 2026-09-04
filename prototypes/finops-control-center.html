@@ -1,0 +1,2080 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>FinOps Control Center prototype</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Finops Ui Only" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Finops Ui Only&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: var(--border-radius-lg, 12.5px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress {
+  display: flex;
+  height: 6px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 6px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed=&quot;true&quot;],
+  [aria-selected=&quot;true&quot;],
+  .is-selected
+) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .btn,
+  .form-control,
+  .form-select {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: max(16px, var(--font-size-normal));
+  }
+
+  .form-control[type=&quot;file&quot;]::file-selector-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control-color[type=&quot;color&quot;] {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-control:is(
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;week&quot;]
+  ) {
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 8px;
+  }
+
+  .form-check {
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+
+  .form-check-input {
+    position: relative;
+  }
+
+  .form-check-input::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    content: &quot;&quot;;
+    transform: translate(-50%, -50%);
+  }
+
+  .form-check-label {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .form-range {
+    height: 44px;
+    touch-action: pan-y;
+  }
+
+  .form-range::-webkit-slider-runnable-track {
+    height: 44px;
+  }
+
+  .form-range::-moz-range-track {
+    height: 44px;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    margin-top: 12px;
+  }
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: 16px !important;
+  height: 16px !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;power-apps-workflow&quot;&gt;
+  &lt;style&gt;
+    #power-apps-workflow {
+      --pa-page: light-dark(#f4f5f7, #15161a);
+      --pa-shell: light-dark(#ffffff, #202126);
+      --pa-sidebar: light-dark(#f8f7fb, #25242b);
+      --pa-panel: light-dark(#ffffff, #2a2b31);
+      --pa-panel-soft: light-dark(#f7f7f9, #313239);
+      --pa-text: light-dark(#242424, #f1f1f3);
+      --pa-muted: light-dark(#616161, #b6b6bd);
+      --pa-border: light-dark(#dedee3, #484950);
+      --pa-purple: light-dark(#742774, #c98acc);
+      --pa-purple-soft: light-dark(#f4e9f5, #422844);
+      --pa-blue: light-dark(#0f6cbd, #68aee8);
+      --pa-blue-soft: light-dark(#e7f3ff, #18344b);
+      --pa-green: light-dark(#107c10, #78c978);
+      --pa-green-soft: light-dark(#e8f5e8, #213b25);
+      --pa-orange: light-dark(#8a4600, #f1b56f);
+      --pa-orange-soft: light-dark(#fff2df, #44311f);
+      --pa-red: light-dark(#c42b1c, #ff8f85);
+      --pa-red-soft: light-dark(#fdebea, #492725);
+      color: var(--pa-text);
+      background: transparent;
+      font-family: &quot;Segoe UI&quot;, system-ui, sans-serif;
+      width: 100%;
+    }
+
+    #power-apps-workflow * { box-sizing: border-box; }
+
+    #power-apps-workflow .pa-window {
+      background: var(--pa-shell);
+      border: 1px solid var(--pa-border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 26px light-dark(rgba(0,0,0,.10), rgba(0,0,0,.28));
+    }
+
+    #power-apps-workflow .pa-topbar {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 14px;
+      background: var(--pa-purple);
+      color: light-dark(#ffffff, #171117);
+    }
+
+    #power-apps-workflow .pa-product-mark {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      background: light-dark(rgba(255,255,255,.18), rgba(0,0,0,.16));
+      border-radius: 5px;
+      font-weight: 500;
+    }
+
+    #power-apps-workflow .pa-app-title { font-weight: 500; }
+    #power-apps-workflow .pa-spacer { flex: 1; }
+    #power-apps-workflow .pa-user { font-size: 13px; }
+
+    #power-apps-workflow .pa-layout {
+      display: grid;
+      grid-template-columns: 168px minmax(0, 1fr);
+      min-height: 560px;
+      background: var(--pa-page);
+    }
+
+    #power-apps-workflow .pa-sidebar {
+      background: var(--pa-sidebar);
+      border-right: 1px solid var(--pa-border);
+      padding: 14px 10px;
+    }
+
+    #power-apps-workflow .pa-sidebar-label {
+      color: var(--pa-muted);
+      font-size: 12px;
+      padding: 0 8px 8px;
+    }
+
+    #power-apps-workflow .pa-nav-button {
+      width: 100%;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--pa-text);
+      padding: 8px;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    #power-apps-workflow .pa-nav-button[aria-pressed=&quot;true&quot;] {
+      background: var(--pa-purple-soft);
+      color: var(--pa-purple);
+      font-weight: 500;
+    }
+
+    #power-apps-workflow .pa-count {
+      margin-left: auto;
+      min-width: 22px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: var(--pa-panel-soft);
+      color: var(--pa-muted);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    #power-apps-workflow .pa-main {
+      min-width: 0;
+      padding: 18px;
+    }
+
+    #power-apps-workflow .pa-heading-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    #power-apps-workflow h2 {
+      margin: 0 0 4px;
+      font-size: 21px;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+
+    #power-apps-workflow .pa-subtitle {
+      color: var(--pa-muted);
+      font-size: 13px;
+    }
+
+    #power-apps-workflow .pa-step-controls {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    #power-apps-workflow .pa-control-button {
+      min-height: 34px;
+      border: 1px solid var(--pa-border);
+      border-radius: 5px;
+      background: var(--pa-panel);
+      color: var(--pa-text);
+      padding: 6px 10px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    #power-apps-workflow .pa-control-button:disabled {
+      opacity: .45;
+      cursor: default;
+    }
+
+    #power-apps-workflow .pa-stepper {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 0 0 14px;
+      padding: 0;
+      list-style: none;
+      background: var(--pa-panel);
+      border: 1px solid var(--pa-border);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    #power-apps-workflow .pa-step-button {
+      width: 100%;
+      min-height: 54px;
+      border: 0;
+      border-right: 1px solid var(--pa-border);
+      background: transparent;
+      color: var(--pa-muted);
+      padding: 7px 6px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    #power-apps-workflow li:last-child .pa-step-button { border-right: 0; }
+    #power-apps-workflow .pa-step-number { display: block; font-size: 11px; margin-bottom: 2px; }
+    #power-apps-workflow .pa-step-name { display: block; font-size: 12px; }
+
+    #power-apps-workflow .pa-step-button[aria-current=&quot;step&quot;] {
+      background: var(--pa-purple-soft);
+      color: var(--pa-purple);
+      font-weight: 500;
+      box-shadow: inset 0 -3px 0 var(--pa-purple);
+    }
+
+    #power-apps-workflow .pa-workarea {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(230px, .7fr);
+      gap: 12px;
+      min-height: 308px;
+    }
+
+    #power-apps-workflow .pa-list-panel,
+    #power-apps-workflow .pa-detail-panel {
+      background: var(--pa-panel);
+      border: 1px solid var(--pa-border);
+      border-radius: 7px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    #power-apps-workflow .pa-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--pa-border);
+      font-weight: 500;
+    }
+
+    #power-apps-workflow .pa-panel-body { padding: 12px; }
+
+    #power-apps-workflow .pa-search {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--pa-border);
+      border-radius: 4px;
+      background: var(--pa-shell);
+      color: var(--pa-muted);
+      padding: 7px 10px;
+      margin-bottom: 10px;
+      font: inherit;
+    }
+
+    #power-apps-workflow .pa-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    #power-apps-workflow .pa-table th {
+      color: var(--pa-muted);
+      font-weight: 500;
+      text-align: left;
+      padding: 8px 7px;
+      border-bottom: 1px solid var(--pa-border);
+    }
+    #power-apps-workflow .pa-table td { padding: 9px 7px; border-bottom: 1px solid var(--pa-border); }
+    #power-apps-workflow .pa-table tr:last-child td { border-bottom: 0; }
+    #power-apps-workflow .pa-selected-row { background: var(--pa-blue-soft); }
+
+    #power-apps-workflow .pa-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    #power-apps-workflow .pa-badge-red { color: var(--pa-red); background: var(--pa-red-soft); }
+    #power-apps-workflow .pa-badge-orange { color: var(--pa-orange); background: var(--pa-orange-soft); }
+    #power-apps-workflow .pa-badge-green { color: var(--pa-green); background: var(--pa-green-soft); }
+    #power-apps-workflow .pa-badge-blue { color: var(--pa-blue); background: var(--pa-blue-soft); }
+
+    #power-apps-workflow .pa-field { margin-bottom: 11px; }
+    #power-apps-workflow .pa-field-label { color: var(--pa-muted); font-size: 11px; margin-bottom: 3px; }
+    #power-apps-workflow .pa-field-value { font-size: 13px; }
+    #power-apps-workflow .pa-rule {
+      margin: 10px 0;
+      height: 1px;
+      background: var(--pa-border);
+    }
+
+    #power-apps-workflow .pa-choice-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    #power-apps-workflow .pa-choice {
+      min-height: 34px;
+      border: 1px solid var(--pa-border);
+      border-radius: 4px;
+      background: var(--pa-panel);
+      color: var(--pa-text);
+      padding: 6px 9px;
+      font: inherit;
+    }
+    #power-apps-workflow .pa-choice-selected { border-color: var(--pa-purple); background: var(--pa-purple-soft); color: var(--pa-purple); }
+
+    #power-apps-workflow .pa-primary-action {
+      width: 100%;
+      min-height: 38px;
+      margin-top: 6px;
+      border: 0;
+      border-radius: 4px;
+      background: var(--pa-purple);
+      color: light-dark(#ffffff, #171117);
+      padding: 8px 12px;
+      font: inherit;
+      font-weight: 500;
+    }
+
+    #power-apps-workflow .pa-callout {
+      padding: 10px;
+      border-left: 3px solid var(--pa-blue);
+      background: var(--pa-blue-soft);
+      color: var(--pa-text);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    #power-apps-workflow .pa-flow {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      background: var(--pa-panel);
+      border: 1px solid var(--pa-border);
+      border-radius: 7px;
+    }
+
+    #power-apps-workflow .pa-flow-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 11px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    #power-apps-workflow .pa-flow-note { color: var(--pa-muted); font-size: 12px; font-weight: 400; }
+
+    #power-apps-workflow .pa-flow-track {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: center;
+    }
+
+    #power-apps-workflow .pa-flow-node {
+      position: relative;
+      min-width: 0;
+      text-align: center;
+      color: var(--pa-muted);
+      font-size: 11px;
+    }
+
+    #power-apps-workflow .pa-flow-node:not(:last-child)::after {
+      content: &quot;&quot;;
+      position: absolute;
+      top: 14px;
+      left: calc(50% + 15px);
+      width: calc(100% - 30px);
+      height: 2px;
+      background: var(--pa-border);
+    }
+
+    #power-apps-workflow .pa-flow-dot {
+      position: relative;
+      z-index: 1;
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 5px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 2px solid var(--pa-border);
+      background: var(--pa-panel);
+      color: var(--pa-muted);
+      font-weight: 500;
+    }
+
+    #power-apps-workflow .pa-flow-node-active { color: var(--pa-purple); font-weight: 500; }
+    #power-apps-workflow .pa-flow-node-active .pa-flow-dot {
+      border-color: var(--pa-purple);
+      background: var(--pa-purple-soft);
+      color: var(--pa-purple);
+    }
+    #power-apps-workflow .pa-flow-node-done .pa-flow-dot {
+      border-color: var(--pa-green);
+      background: var(--pa-green-soft);
+      color: var(--pa-green);
+    }
+
+    #power-apps-workflow .pa-status-line {
+      margin-top: 10px;
+      min-height: 38px;
+      padding: 9px 10px;
+      background: var(--pa-panel-soft);
+      color: var(--pa-text);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 680px) {
+      #power-apps-workflow .pa-layout { grid-template-columns: 1fr; }
+      #power-apps-workflow .pa-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--pa-border);
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+        padding: 8px;
+      }
+      #power-apps-workflow .pa-sidebar-label { display: none; }
+      #power-apps-workflow .pa-nav-button { justify-content: center; text-align: center; }
+      #power-apps-workflow .pa-nav-button i, #power-apps-workflow .pa-count { display: none; }
+      #power-apps-workflow .pa-main { padding: 12px; }
+      #power-apps-workflow .pa-workarea { grid-template-columns: 1fr; }
+      #power-apps-workflow .pa-heading-row { align-items: center; }
+      #power-apps-workflow .pa-user { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      #power-apps-workflow .pa-heading-row { display: block; }
+      #power-apps-workflow .pa-step-controls { margin-top: 9px; justify-content: flex-end; }
+      #power-apps-workflow .pa-step-button { min-height: 42px; }
+      #power-apps-workflow .pa-flow-track { grid-template-columns: 1fr; gap: 4px; }
+      #power-apps-workflow .pa-flow-node { display: flex; align-items: center; gap: 8px; text-align: left; }
+      #power-apps-workflow .pa-flow-dot { margin: 0; flex: 0 0 auto; }
+      #power-apps-workflow .pa-flow-node:not(:last-child)::after { display: none; }
+    }
+  &lt;/style&gt;
+
+  &lt;section class=&quot;pa-window&quot; aria-label=&quot;Interactive Power Apps workflow example&quot;&gt;
+    &lt;header class=&quot;pa-topbar&quot;&gt;
+      &lt;div class=&quot;pa-product-mark&quot; aria-hidden=&quot;true&quot;&gt;P&lt;/div&gt;
+      &lt;div class=&quot;pa-app-title&quot;&gt;FinOps Control Center&lt;/div&gt;
+      &lt;div class=&quot;pa-spacer&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;pa-user&quot;&gt;Maya Chen · Operations&lt;/div&gt;
+    &lt;/header&gt;
+
+    &lt;div class=&quot;pa-layout&quot;&gt;
+      &lt;nav class=&quot;pa-sidebar&quot; aria-label=&quot;Internal applications&quot;&gt;
+        &lt;div class=&quot;pa-sidebar-label&quot;&gt;Applications&lt;/div&gt;
+        &lt;button type=&quot;button&quot; class=&quot;pa-nav-button&quot; data-app=&quot;kyc&quot; aria-pressed=&quot;true&quot;&gt;
+          &lt;i data-lucide=&quot;contact-round&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+          &lt;span&gt;KYC reviews&lt;/span&gt;&lt;span class=&quot;pa-count&quot;&gt;18&lt;/span&gt;
+        &lt;/button&gt;
+        &lt;button type=&quot;button&quot; class=&quot;pa-nav-button&quot; data-app=&quot;refunds&quot; aria-pressed=&quot;false&quot;&gt;
+          &lt;i data-lucide=&quot;receipt-text&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+          &lt;span&gt;Refunds&lt;/span&gt;&lt;span class=&quot;pa-count&quot;&gt;7&lt;/span&gt;
+        &lt;/button&gt;
+        &lt;button type=&quot;button&quot; class=&quot;pa-nav-button&quot; data-app=&quot;flags&quot; aria-pressed=&quot;false&quot;&gt;
+          &lt;i data-lucide=&quot;flag&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+          &lt;span&gt;Feature flags&lt;/span&gt;&lt;span class=&quot;pa-count&quot;&gt;42&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/nav&gt;
+
+      &lt;main class=&quot;pa-main&quot;&gt;
+        &lt;div class=&quot;pa-heading-row&quot;&gt;
+          &lt;div&gt;
+            &lt;h2 id=&quot;pa-current-title&quot;&gt;KYC review queue&lt;/h2&gt;
+            &lt;div class=&quot;pa-subtitle&quot; id=&quot;pa-current-subtitle&quot;&gt;Risk analysts investigate cases and record a controlled decision.&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;pa-step-controls&quot; aria-label=&quot;Workflow step controls&quot;&gt;
+            &lt;button type=&quot;button&quot; class=&quot;pa-control-button&quot; id=&quot;pa-prev&quot; disabled&gt;Previous&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;pa-control-button&quot; id=&quot;pa-next&quot;&gt;Next&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;ol class=&quot;pa-stepper&quot; id=&quot;pa-stepper&quot; aria-label=&quot;Workflow steps&quot;&gt;&lt;/ol&gt;
+        &lt;div class=&quot;pa-workarea&quot; id=&quot;pa-workarea&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+
+        &lt;section class=&quot;pa-flow&quot; aria-label=&quot;Systems involved in the current step&quot;&gt;
+          &lt;div class=&quot;pa-flow-title&quot;&gt;
+            &lt;span&gt;What happens behind the screen&lt;/span&gt;
+            &lt;span class=&quot;pa-flow-note&quot; id=&quot;pa-flow-owner&quot;&gt;Current owner · Canvas app&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;pa-flow-track&quot; id=&quot;pa-flow-track&quot;&gt;&lt;/div&gt;
+          &lt;div class=&quot;pa-status-line&quot; id=&quot;pa-status-line&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+        &lt;/section&gt;
+      &lt;/main&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;script&gt;
+    (() =&gt; {
+      const root = document.getElementById(&#x27;power-apps-workflow&#x27;);
+      const title = root.querySelector(&#x27;#pa-current-title&#x27;);
+      const subtitle = root.querySelector(&#x27;#pa-current-subtitle&#x27;);
+      const stepper = root.querySelector(&#x27;#pa-stepper&#x27;);
+      const workarea = root.querySelector(&#x27;#pa-workarea&#x27;);
+      const flowTrack = root.querySelector(&#x27;#pa-flow-track&#x27;);
+      const flowOwner = root.querySelector(&#x27;#pa-flow-owner&#x27;);
+      const statusLine = root.querySelector(&#x27;#pa-status-line&#x27;);
+      const prev = root.querySelector(&#x27;#pa-prev&#x27;);
+      const next = root.querySelector(&#x27;#pa-next&#x27;);
+
+      const systems = [&#x27;Employee&#x27;, &#x27;Canvas app&#x27;, &#x27;Dataverse&#x27;, &#x27;Power Automate&#x27;, &#x27;Company API&#x27;];
+      const apps = {
+        kyc: {
+          title: &#x27;KYC review queue&#x27;,
+          subtitle: &#x27;Risk analysts investigate cases and record a controlled decision.&#x27;,
+          steps: [
+            {
+              name: &#x27;Open queue&#x27;, owner: 1,
+              status: &#x27;The canvas app reads assigned cases from Dataverse. Security roles limit which customers and fields Maya can see.&#x27;,
+              listTitle: &#x27;My review queue&#x27;, detailTitle: &#x27;Queue filters&#x27;,
+              rows: [
+                [&#x27;KYC-10482&#x27;,&#x27;Acme Imports&#x27;,&#x27;High&#x27;,&#x27;4h 12m&#x27;],
+                [&#x27;KYC-10476&#x27;,&#x27;Northstar OÜ&#x27;,&#x27;Medium&#x27;,&#x27;2h 38m&#x27;],
+                [&#x27;KYC-10451&#x27;,&#x27;June Labs&#x27;,&#x27;Medium&#x27;,&#x27;1h 05m&#x27;]
+              ],
+              headers: [&#x27;Case&#x27;,&#x27;Customer&#x27;,&#x27;Risk&#x27;,&#x27;Age&#x27;], selected: 0,
+              detail: [[&#x27;Assigned to&#x27;,&#x27;Maya Chen&#x27;],[&#x27;Status&#x27;,&#x27;Needs review&#x27;],[&#x27;Risk tier&#x27;,&#x27;High and medium&#x27;],[&#x27;Sort order&#x27;,&#x27;Oldest first&#x27;]],
+              callout: &#x27;Analysts land on a filtered queue, not the whole customer table. A production app should delegate filters to Dataverse so large queues return complete results.&#x27;
+            },
+            {
+              name: &#x27;Review case&#x27;, owner: 2,
+              status: &#x27;Selecting a row retrieves the customer record, identity evidence, provider results, and prior actions. Dataverse applies record and column permissions.&#x27;,
+              listTitle: &#x27;Customer evidence&#x27;, detailTitle: &#x27;Case KYC-10482&#x27;,
+              rows: [
+                [&#x27;Identity&#x27;,&#x27;Passport ending 2941&#x27;,&#x27;Verified&#x27;,&#x27;Sep 3&#x27;],
+                [&#x27;Address&#x27;,&#x27;Utility statement&#x27;,&#x27;Mismatch&#x27;,&#x27;Sep 3&#x27;],
+                [&#x27;Sanctions&#x27;,&#x27;Provider screening&#x27;,&#x27;Clear&#x27;,&#x27;Sep 4&#x27;]
+              ],
+              headers: [&#x27;Check&#x27;,&#x27;Source&#x27;,&#x27;Result&#x27;,&#x27;Updated&#x27;], selected: 1,
+              detail: [[&#x27;Customer&#x27;,&#x27;Acme Imports Ltd&#x27;],[&#x27;Risk score&#x27;,&#x27;78 of 100&#x27;],[&#x27;Country&#x27;,&#x27;Estonia&#x27;],[&#x27;Trigger&#x27;,&#x27;Address mismatch&#x27;]],
+              callout: &#x27;The right panel can combine Dataverse fields with data returned by a custom connector. Sensitive values should appear only for approved roles.&#x27;
+            },
+            {
+              name: &#x27;Choose decision&#x27;, owner: 1,
+              status: &#x27;The analyst chooses an allowed outcome. Power Fx validates required evidence and blocks submission until the analyst supplies a reason.&#x27;,
+              listTitle: &#x27;Decision checklist&#x27;, detailTitle: &#x27;Record decision&#x27;,
+              rows: [
+                [&#x27;Identity verified&#x27;,&#x27;Required&#x27;,&#x27;Complete&#x27;,&#x27;&#x27;],
+                [&#x27;Address explained&#x27;,&#x27;Required&#x27;,&#x27;Missing&#x27;,&#x27;&#x27;],
+                [&#x27;Sanctions screened&#x27;,&#x27;Required&#x27;,&#x27;Complete&#x27;,&#x27;&#x27;]
+              ],
+              headers: [&#x27;Control&#x27;,&#x27;Policy&#x27;,&#x27;State&#x27;,&#x27;&#x27;], selected: 1,
+              detail: [[&#x27;Decision&#x27;,&#x27;Escalate&#x27;],[&#x27;Reason&#x27;,&#x27;Address evidence conflicts with registry&#x27;],[&#x27;Next reviewer&#x27;,&#x27;Financial Crime Manager&#x27;]],
+              choices: [&#x27;Approve&#x27;,&#x27;Escalate&#x27;,&#x27;Reject&#x27;], choice: 1,
+              callout: &#x27;The app should enforce the policy before it enables Submit. A visible warning explains exactly what is missing.&#x27;
+            },
+            {
+              name: &#x27;Run approval&#x27;, owner: 3,
+              status: &#x27;Submission creates a decision row and starts a Power Automate flow. High-risk approvals and all rejections route to a manager before any external update.&#x27;,
+              listTitle: &#x27;Approval history&#x27;, detailTitle: &#x27;Manager approval&#x27;,
+              rows: [
+                [&#x27;Submitted&#x27;,&#x27;Maya Chen&#x27;,&#x27;10:42&#x27;,&#x27;Complete&#x27;],
+                [&#x27;Manager review&#x27;,&#x27;Jon Bell&#x27;,&#x27;10:43&#x27;,&#x27;Pending&#x27;],
+                [&#x27;Customer update&#x27;,&#x27;System&#x27;,&#x27;—&#x27;,&#x27;Waiting&#x27;]
+              ],
+              headers: [&#x27;Step&#x27;,&#x27;Owner&#x27;,&#x27;Time&#x27;,&#x27;State&#x27;], selected: 1,
+              detail: [[&#x27;Request&#x27;,&#x27;Escalate KYC-10482&#x27;],[&#x27;Approver&#x27;,&#x27;Jon Bell&#x27;],[&#x27;Due&#x27;,&#x27;Today, 12:00&#x27;],[&#x27;Fallback&#x27;,&#x27;Risk Ops lead&#x27;]],
+              callout: &#x27;Power Automate owns routing, reminders, timeout handling, and the approval response. The canvas app shows the state but does not keep running in the reviewer’s browser.&#x27;
+            },
+            {
+              name: &#x27;Update and audit&#x27;, owner: 4,
+              status: &#x27;After approval, the flow calls the KYC or customer API, writes the final state to Dataverse, and sends a notification. Audit data records the actor, time, old value, and new value.&#x27;,
+              listTitle: &#x27;Completed actions&#x27;, detailTitle: &#x27;Case completed&#x27;,
+              rows: [
+                [&#x27;Decision saved&#x27;,&#x27;Dataverse&#x27;,&#x27;10:51&#x27;,&#x27;Complete&#x27;],
+                [&#x27;Risk state updated&#x27;,&#x27;Customer API&#x27;,&#x27;10:51&#x27;,&#x27;Complete&#x27;],
+                [&#x27;Team notified&#x27;,&#x27;Teams&#x27;,&#x27;10:52&#x27;,&#x27;Complete&#x27;]
+              ],
+              headers: [&#x27;Action&#x27;,&#x27;System&#x27;,&#x27;Time&#x27;,&#x27;State&#x27;], selected: 0,
+              detail: [[&#x27;Final state&#x27;,&#x27;Escalated&#x27;],[&#x27;Approved by&#x27;,&#x27;Jon Bell&#x27;],[&#x27;Audit ID&#x27;,&#x27;AUD-887192&#x27;],[&#x27;Retention&#x27;,&#x27;Per compliance policy&#x27;]],
+              callout: &#x27;The analyst sees a receipt. Failed API calls should move to an exception queue instead of leaving Dataverse and the core system out of sync.&#x27;
+            }
+          ]
+        },
+        refunds: {
+          title: &#x27;Refunds dashboard&#x27;,
+          subtitle: &#x27;Support agents validate, approve, and submit customer refunds.&#x27;,
+          steps: [
+            {
+              name: &#x27;Find payment&#x27;, owner: 1,
+              status: &#x27;The agent searches by payment ID, account, or refund status. The canvas app queries a Dataverse mirror or a connector backed by the payments service.&#x27;,
+              listTitle: &#x27;Refund requests&#x27;, detailTitle: &#x27;Search and filters&#x27;,
+              rows: [[&#x27;RF-8821&#x27;,&#x27;€640.00&#x27;,&#x27;New&#x27;,&#x27;16m&#x27;],[&#x27;RF-8819&#x27;,&#x27;€48.20&#x27;,&#x27;New&#x27;,&#x27;31m&#x27;],[&#x27;RF-8811&#x27;,&#x27;€1,275.00&#x27;,&#x27;Review&#x27;,&#x27;1h 08m&#x27;]],
+              headers: [&#x27;Request&#x27;,&#x27;Amount&#x27;,&#x27;Status&#x27;,&#x27;Age&#x27;], selected: 0,
+              detail: [[&#x27;Payment ID&#x27;,&#x27;PAY-719442&#x27;],[&#x27;Customer&#x27;,&#x27;Acme Imports&#x27;],[&#x27;Channel&#x27;,&#x27;Card&#x27;],[&#x27;Captured&#x27;,&#x27;Aug 29&#x27;]],
+              callout: &#x27;A support agent sees refund work, not raw payment credentials. The API or connector should return only the fields needed for this task.&#x27;
+            },
+            {
+              name: &#x27;Check eligibility&#x27;, owner: 4,
+              status: &#x27;The app or a flow asks the payments service for captured amount, prior refunds, disputes, settlement state, and the maximum refundable balance.&#x27;,
+              listTitle: &#x27;Eligibility checks&#x27;, detailTitle: &#x27;Available balance&#x27;,
+              rows: [[&#x27;Payment settled&#x27;,&#x27;Payments API&#x27;,&#x27;Pass&#x27;,&#x27;&#x27;],[&#x27;No open dispute&#x27;,&#x27;Disputes API&#x27;,&#x27;Pass&#x27;,&#x27;&#x27;],[&#x27;Refund balance&#x27;,&#x27;Payments API&#x27;,&#x27;€640.00&#x27;,&#x27;&#x27;]],
+              headers: [&#x27;Check&#x27;,&#x27;Source&#x27;,&#x27;Result&#x27;,&#x27;&#x27;], selected: 2,
+              detail: [[&#x27;Captured&#x27;,&#x27;€640.00&#x27;],[&#x27;Already refunded&#x27;,&#x27;€0.00&#x27;],[&#x27;Available&#x27;,&#x27;€640.00&#x27;],[&#x27;Currency&#x27;,&#x27;EUR&#x27;]],
+              callout: &#x27;The service, not the browser, should calculate the authoritative refundable amount. That avoids stale balances and duplicate refunds.&#x27;
+            },
+            {
+              name: &#x27;Enter refund&#x27;, owner: 1,
+              status: &#x27;The agent enters a full or partial amount and a controlled reason. The app validates amount, currency, required notes, and duplicate requests.&#x27;,
+              listTitle: &#x27;Refund details&#x27;, detailTitle: &#x27;Prepare refund&#x27;,
+              rows: [[&#x27;Requested amount&#x27;,&#x27;€640.00&#x27;,&#x27;Valid&#x27;,&#x27;&#x27;],[&#x27;Refund reason&#x27;,&#x27;Service not delivered&#x27;,&#x27;Set&#x27;,&#x27;&#x27;],[&#x27;Customer note&#x27;,&#x27;Order cancelled&#x27;,&#x27;Set&#x27;,&#x27;&#x27;]],
+              headers: [&#x27;Field&#x27;,&#x27;Value&#x27;,&#x27;Check&#x27;,&#x27;&#x27;], selected: 0,
+              detail: [[&#x27;Type&#x27;,&#x27;Full refund&#x27;],[&#x27;Amount&#x27;,&#x27;€640.00&#x27;],[&#x27;Reason&#x27;,&#x27;Service not delivered&#x27;],[&#x27;Customer notice&#x27;,&#x27;Send email&#x27;]],
+              choices: [&#x27;Full refund&#x27;,&#x27;Partial refund&#x27;], choice: 0,
+              callout: &#x27;The submit button should remain disabled until every required field passes. Generate one idempotency key for this refund request.&#x27;
+            },
+            {
+              name: &#x27;Approve&#x27;, owner: 3,
+              status: &#x27;Power Automate applies the approval policy. A €640 refund exceeds this team’s €500 limit, so a finance manager must approve it.&#x27;,
+              listTitle: &#x27;Approval policy&#x27;, detailTitle: &#x27;Approval request&#x27;,
+              rows: [[&#x27;Up to €100&#x27;,&#x27;Support agent&#x27;,&#x27;Automatic&#x27;,&#x27;&#x27;],[&#x27;€100 to €500&#x27;,&#x27;Team lead&#x27;,&#x27;Automatic&#x27;,&#x27;&#x27;],[&#x27;Above €500&#x27;,&#x27;Finance manager&#x27;,&#x27;Required&#x27;,&#x27;&#x27;]],
+              headers: [&#x27;Amount&#x27;,&#x27;Authority&#x27;,&#x27;Result&#x27;,&#x27;&#x27;], selected: 2,
+              detail: [[&#x27;Approver&#x27;,&#x27;Elena Saar&#x27;],[&#x27;Amount&#x27;,&#x27;€640.00&#x27;],[&#x27;Reason&#x27;,&#x27;Service not delivered&#x27;],[&#x27;SLA&#x27;,&#x27;2 hours&#x27;]],
+              callout: &#x27;The approval rule belongs in a controlled configuration table or service. Do not bury payment authority in a screen formula that makers can change casually.&#x27;
+            },
+            {
+              name: &#x27;Execute and reconcile&#x27;, owner: 4,
+              status: &#x27;The flow sends the approved request to the payments API with its idempotency key. It stores the provider response, updates the dashboard, and notifies the customer.&#x27;,
+              listTitle: &#x27;Execution log&#x27;, detailTitle: &#x27;Refund complete&#x27;,
+              rows: [[&#x27;Approval recorded&#x27;,&#x27;Dataverse&#x27;,&#x27;14:08&#x27;,&#x27;Complete&#x27;],[&#x27;Refund created&#x27;,&#x27;Payments API&#x27;,&#x27;14:09&#x27;,&#x27;Complete&#x27;],[&#x27;Ledger event matched&#x27;,&#x27;Finance API&#x27;,&#x27;14:10&#x27;,&#x27;Complete&#x27;]],
+              headers: [&#x27;Action&#x27;,&#x27;System&#x27;,&#x27;Time&#x27;,&#x27;State&#x27;], selected: 1,
+              detail: [[&#x27;Provider refund&#x27;,&#x27;re_92J4K&#x27;],[&#x27;Amount&#x27;,&#x27;€640.00&#x27;],[&#x27;Status&#x27;,&#x27;Succeeded&#x27;],[&#x27;Audit ID&#x27;,&#x27;AUD-887944&#x27;]],
+              callout: &#x27;Reconciliation is part of the workflow. A timeout must lead to a status check, not a blind retry that could submit the refund twice.&#x27;
+            }
+          ]
+        },
+        flags: {
+          title: &#x27;Feature-flag admin panel&#x27;,
+          subtitle: &#x27;Engineers change rollout settings with production safeguards.&#x27;,
+          steps: [
+            {
+              name: &#x27;Browse flags&#x27;, owner: 1,
+              status: &#x27;The app loads flags through an internal API or custom connector. Environment and ownership filters narrow the list.&#x27;,
+              listTitle: &#x27;Feature flags&#x27;, detailTitle: &#x27;Filters&#x27;,
+              rows: [[&#x27;new-checkout&#x27;,&#x27;Production&#x27;,&#x27;25%&#x27;,&#x27;Payments&#x27;],[&#x27;kyc-v2&#x27;,&#x27;Staging&#x27;,&#x27;100%&#x27;,&#x27;Risk&#x27;],[&#x27;refund-reasons&#x27;,&#x27;Production&#x27;,&#x27;Off&#x27;,&#x27;Support&#x27;]],
+              headers: [&#x27;Flag&#x27;,&#x27;Environment&#x27;,&#x27;Rollout&#x27;,&#x27;Owner&#x27;], selected: 0,
+              detail: [[&#x27;Environment&#x27;,&#x27;Production&#x27;],[&#x27;Team&#x27;,&#x27;All teams&#x27;],[&#x27;State&#x27;,&#x27;Active and inactive&#x27;],[&#x27;Search&#x27;,&#x27;new-checkout&#x27;]],
+              callout: &#x27;Production and staging must look unmistakably different. The signed-in user’s group controls which environments they can edit.&#x27;
+            },
+            {
+              name: &#x27;Inspect flag&#x27;, owner: 4,
+              status: &#x27;Selecting a flag retrieves its current configuration, owner, targeting rules, dependency warnings, and recent changes from the flag service.&#x27;,
+              listTitle: &#x27;Recent changes&#x27;, detailTitle: &#x27;new-checkout&#x27;,
+              rows: [[&#x27;25% rollout&#x27;,&#x27;Priit Tamm&#x27;,&#x27;Sep 4&#x27;,&#x27;CHG-812&#x27;],[&#x27;10% rollout&#x27;,&#x27;Nina Hall&#x27;,&#x27;Sep 2&#x27;,&#x27;CHG-799&#x27;],[&#x27;Flag created&#x27;,&#x27;Priit Tamm&#x27;,&#x27;Aug 28&#x27;,&#x27;CHG-761&#x27;]],
+              headers: [&#x27;Change&#x27;,&#x27;Actor&#x27;,&#x27;Date&#x27;,&#x27;ID&#x27;], selected: 0,
+              detail: [[&#x27;Environment&#x27;,&#x27;Production&#x27;],[&#x27;Current rollout&#x27;,&#x27;25%&#x27;],[&#x27;Owner&#x27;,&#x27;Payments&#x27;],[&#x27;Expires&#x27;,&#x27;Sep 30&#x27;]],
+              callout: &#x27;The panel should show the live service value before editing. A stale screen must not overwrite a newer change made elsewhere.&#x27;
+            },
+            {
+              name: &#x27;Set rollout&#x27;, owner: 1,
+              status: &#x27;The engineer chooses a percentage or target cohort, adds a reason, and reviews the calculated impact before submission.&#x27;,
+              listTitle: &#x27;Proposed targeting&#x27;, detailTitle: &#x27;Change rollout&#x27;,
+              rows: [[&#x27;Default cohort&#x27;,&#x27;All eligible users&#x27;,&#x27;50%&#x27;,&#x27;12,400 users&#x27;],[&#x27;Employees&#x27;,&#x27;Company email&#x27;,&#x27;100%&#x27;,&#x27;186 users&#x27;],[&#x27;Excluded&#x27;,&#x27;Active incidents&#x27;,&#x27;0%&#x27;,&#x27;340 users&#x27;]],
+              headers: [&#x27;Rule&#x27;,&#x27;Audience&#x27;,&#x27;Value&#x27;,&#x27;Estimate&#x27;], selected: 0,
+              detail: [[&#x27;Previous value&#x27;,&#x27;25%&#x27;],[&#x27;New value&#x27;,&#x27;50%&#x27;],[&#x27;Reason&#x27;,&#x27;Checkout metrics healthy&#x27;],[&#x27;Ticket&#x27;,&#x27;PAY-1842&#x27;]],
+              choices: [&#x27;Off&#x27;,&#x27;25%&#x27;,&#x27;50%&#x27;,&#x27;100%&#x27;], choice: 2,
+              callout: &#x27;The review panel makes the before and after state explicit. The change request should include the flag version to prevent lost updates.&#x27;
+            },
+            {
+              name: &#x27;Approve production&#x27;, owner: 3,
+              status: &#x27;A Power Automate flow routes sensitive production changes to the service owner or on-call engineer. Staging changes may bypass this step.&#x27;,
+              listTitle: &#x27;Change controls&#x27;, detailTitle: &#x27;Production approval&#x27;,
+              rows: [[&#x27;Owner approval&#x27;,&#x27;Payments on-call&#x27;,&#x27;Required&#x27;,&#x27;Pending&#x27;],[&#x27;Active incident check&#x27;,&#x27;Incident API&#x27;,&#x27;Required&#x27;,&#x27;Clear&#x27;],[&#x27;Change window&#x27;,&#x27;Policy table&#x27;,&#x27;Required&#x27;,&#x27;Open&#x27;]],
+              headers: [&#x27;Control&#x27;,&#x27;Source&#x27;,&#x27;Policy&#x27;,&#x27;State&#x27;], selected: 0,
+              detail: [[&#x27;Approver&#x27;,&#x27;Payments on-call&#x27;],[&#x27;Change&#x27;,&#x27;25% to 50%&#x27;],[&#x27;Ticket&#x27;,&#x27;PAY-1842&#x27;],[&#x27;Rollback&#x27;,&#x27;Return to 25%&#x27;]],
+              callout: &#x27;Power Automate can handle approval and notification. The flag service must still enforce authorization so nobody can bypass the panel by calling its API directly.&#x27;
+            },
+            {
+              name: &#x27;Apply and watch&#x27;, owner: 4,
+              status: &#x27;The flow calls the flag service, saves the before and after values, and posts to the engineering channel. Monitoring remains in the observability system.&#x27;,
+              listTitle: &#x27;Change result&#x27;, detailTitle: &#x27;Rollout updated&#x27;,
+              rows: [[&#x27;Flag API updated&#x27;,&#x27;Flag service&#x27;,&#x27;16:22&#x27;,&#x27;Complete&#x27;],[&#x27;Audit event saved&#x27;,&#x27;Dataverse&#x27;,&#x27;16:22&#x27;,&#x27;Complete&#x27;],[&#x27;Team notified&#x27;,&#x27;Teams&#x27;,&#x27;16:23&#x27;,&#x27;Complete&#x27;]],
+              headers: [&#x27;Action&#x27;,&#x27;System&#x27;,&#x27;Time&#x27;,&#x27;State&#x27;], selected: 0,
+              detail: [[&#x27;Current rollout&#x27;,&#x27;50%&#x27;],[&#x27;Changed by&#x27;,&#x27;Priit Tamm&#x27;],[&#x27;Approved by&#x27;,&#x27;Payments on-call&#x27;],[&#x27;Rollback action&#x27;,&#x27;Ready&#x27;]],
+              callout: &#x27;A prominent rollback action can submit a new controlled change. It should not erase the original audit record.&#x27;
+            }
+          ]
+        }
+      };
+
+      apps.kyc.steps = [apps.kyc.steps[0], apps.kyc.steps[1], apps.kyc.steps[2]];
+      apps.refunds.steps = [apps.refunds.steps[0], apps.refunds.steps[2], apps.refunds.steps[3]];
+      apps.flags.steps = [apps.flags.steps[0], apps.flags.steps[2], apps.flags.steps[3]];
+
+      let currentApp = &#x27;kyc&#x27;;
+      let currentStep = 0;
+
+      function badgeClass(value) {
+        const v = String(value).toLowerCase();
+        if (v.includes(&#x27;high&#x27;) || v.includes(&#x27;missing&#x27;) || v.includes(&#x27;required&#x27;)) return &#x27;pa-badge pa-badge-red&#x27;;
+        if (v.includes(&#x27;medium&#x27;) || v.includes(&#x27;pending&#x27;) || v.includes(&#x27;waiting&#x27;) || v.includes(&#x27;review&#x27;)) return &#x27;pa-badge pa-badge-orange&#x27;;
+        if (v.includes(&#x27;complete&#x27;) || v.includes(&#x27;pass&#x27;) || v.includes(&#x27;clear&#x27;) || v.includes(&#x27;succeeded&#x27;)) return &#x27;pa-badge pa-badge-green&#x27;;
+        if (v.includes(&#x27;new&#x27;) || v.includes(&#x27;verified&#x27;) || v.includes(&#x27;100%&#x27;)) return &#x27;pa-badge pa-badge-blue&#x27;;
+        return &#x27;&#x27;;
+      }
+
+      function renderStepper() {
+        stepper.innerHTML = apps[currentApp].steps.map((step, index) =&gt; `
+          &lt;li&gt;
+            &lt;button type=&quot;button&quot; class=&quot;pa-step-button&quot; data-step=&quot;${index}&quot; ${index === currentStep ? &#x27;aria-current=&quot;step&quot;&#x27; : &#x27;&#x27;}&gt;
+              &lt;span class=&quot;pa-step-number&quot;&gt;Step ${index + 1}&lt;/span&gt;
+              &lt;span class=&quot;pa-step-name&quot;&gt;${step.name}&lt;/span&gt;
+            &lt;/button&gt;
+          &lt;/li&gt;`).join(&#x27;&#x27;);
+      }
+
+      function renderWorkarea(step) {
+        const actionLabels = {
+          kyc: [&#x27;Open selected case&#x27;, &#x27;Continue review&#x27;, &#x27;Submit for escalation&#x27;],
+          refunds: [&#x27;Open refund&#x27;, &#x27;Submit for approval&#x27;, &#x27;View approval&#x27;],
+          flags: [&#x27;Open selected flag&#x27;, &#x27;Submit change request&#x27;, &#x27;View approval&#x27;]
+        };
+        const rows = step.rows.map((row, index) =&gt; `
+          &lt;tr class=&quot;${index === step.selected ? &#x27;pa-selected-row&#x27; : &#x27;&#x27;}&quot;&gt;
+            ${row.map((value, column) =&gt; `&lt;td&gt;${column &gt;= 2 &amp;&amp; badgeClass(value) ? `&lt;span class=&quot;${badgeClass(value)}&quot;&gt;${value}&lt;/span&gt;` : value}&lt;/td&gt;`).join(&#x27;&#x27;)}
+          &lt;/tr&gt;`).join(&#x27;&#x27;);
+        const choices = step.choices ? `
+          &lt;div class=&quot;pa-field&quot;&gt;
+            &lt;div class=&quot;pa-field-label&quot;&gt;Available choice&lt;/div&gt;
+            &lt;div class=&quot;pa-choice-row&quot;&gt;${step.choices.map((choice, index) =&gt; `&lt;button type=&quot;button&quot; class=&quot;pa-choice ${index === step.choice ? &#x27;pa-choice-selected&#x27; : &#x27;&#x27;}&quot;&gt;${choice}&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;/div&gt;
+          &lt;/div&gt;` : &#x27;&#x27;;
+        const details = step.detail.map(item =&gt; `
+          &lt;div class=&quot;pa-field&quot;&gt;&lt;div class=&quot;pa-field-label&quot;&gt;${item[0]}&lt;/div&gt;&lt;div class=&quot;pa-field-value&quot;&gt;${item[1]}&lt;/div&gt;&lt;/div&gt;`).join(&#x27;&#x27;);
+
+        workarea.innerHTML = `
+          &lt;section class=&quot;pa-list-panel&quot; aria-label=&quot;${step.listTitle}&quot;&gt;
+            &lt;div class=&quot;pa-panel-header&quot;&gt;${step.listTitle}&lt;/div&gt;
+            &lt;div class=&quot;pa-panel-body&quot;&gt;
+              &lt;input class=&quot;pa-search&quot; value=&quot;Search or filter&quot; readonly aria-label=&quot;Example search field&quot;&gt;
+              &lt;table class=&quot;pa-table&quot;&gt;
+                &lt;thead&gt;&lt;tr&gt;${step.headers.map(header =&gt; `&lt;th&gt;${header}&lt;/th&gt;`).join(&#x27;&#x27;)}&lt;/tr&gt;&lt;/thead&gt;
+                &lt;tbody&gt;${rows}&lt;/tbody&gt;
+              &lt;/table&gt;
+            &lt;/div&gt;
+          &lt;/section&gt;
+          &lt;aside class=&quot;pa-detail-panel&quot; aria-label=&quot;${step.detailTitle}&quot;&gt;
+            &lt;div class=&quot;pa-panel-header&quot;&gt;${step.detailTitle}&lt;/div&gt;
+            &lt;div class=&quot;pa-panel-body&quot;&gt;
+              ${details}
+              ${choices}
+              &lt;button type=&quot;button&quot; class=&quot;pa-primary-action&quot;&gt;${actionLabels[currentApp][currentStep]}&lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/aside&gt;`;
+      }
+
+      function renderFlow(step) {
+        flowTrack.innerHTML = systems.map((system, index) =&gt; {
+          const state = index &lt; step.owner ? &#x27;pa-flow-node-done&#x27; : index === step.owner ? &#x27;pa-flow-node-active&#x27; : &#x27;&#x27;;
+          const mark = index &lt; step.owner ? &#x27;✓&#x27; : index + 1;
+          return `&lt;div class=&quot;pa-flow-node ${state}&quot;&gt;&lt;span class=&quot;pa-flow-dot&quot;&gt;${mark}&lt;/span&gt;&lt;span&gt;${system}&lt;/span&gt;&lt;/div&gt;`;
+        }).join(&#x27;&#x27;);
+        flowOwner.textContent = `Current owner · ${systems[step.owner]}`;
+        statusLine.textContent = step.status;
+      }
+
+      function render() {
+        const app = apps[currentApp];
+        const step = app.steps[currentStep];
+        title.textContent = app.title;
+        subtitle.textContent = app.subtitle;
+        root.querySelectorAll(&#x27;.pa-nav-button&#x27;).forEach(button =&gt; {
+          button.setAttribute(&#x27;aria-pressed&#x27;, String(button.dataset.app === currentApp));
+        });
+        prev.disabled = currentStep === 0;
+        next.disabled = currentStep === app.steps.length - 1;
+        renderStepper();
+        renderWorkarea(step);
+        renderFlow(step);
+        if (window.lucide) window.lucide.createIcons({ attrs: { width: 16, height: 16 } });
+      }
+
+      root.querySelectorAll(&#x27;.pa-nav-button&#x27;).forEach(button =&gt; {
+        button.addEventListener(&#x27;click&#x27;, () =&gt; {
+          currentApp = button.dataset.app;
+          currentStep = 0;
+          render();
+        });
+      });
+
+      stepper.addEventListener(&#x27;click&#x27;, event =&gt; {
+        const button = event.target.closest(&#x27;[data-step]&#x27;);
+        if (!button) return;
+        currentStep = Number(button.dataset.step);
+        render();
+      });
+
+      prev.addEventListener(&#x27;click&#x27;, () =&gt; {
+        if (currentStep &gt; 0) currentStep -= 1;
+        render();
+      });
+      next.addEventListener(&#x27;click&#x27;, () =&gt; {
+        if (currentStep &lt; apps[currentApp].steps.length - 1) currentStep += 1;
+        render();
+      });
+
+      window.addEventListener(&#x27;message&#x27;, event =&gt; {
+        const state = event.data;
+        if (!state || state.type !== &#x27;finops-prototype-state&#x27;) return;
+        if (Object.prototype.hasOwnProperty.call(apps, state.app)) currentApp = state.app;
+        const requestedStep = Number(state.step);
+        if (Number.isInteger(requestedStep)) {
+          currentStep = Math.min(Math.max(requestedStep, 0), apps[currentApp].steps.length - 1);
+        }
+        render();
+      });
+
+      render();
+    })();
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+  let lastPointerWasTouch = false;
+  let pinnedByTouch = false;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    pinnedByTouch = false;
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handlePointer = (event) =&gt; {
+    lastPointerWasTouch =
+      event.type === &quot;pointerdown&quot; &amp;&amp; event.pointerType === &quot;touch&quot;;
+  };
+  const handleTouchClick = (event) =&gt; {
+    const isTouch = event.pointerType === &quot;touch&quot; || lastPointerWasTouch;
+    lastPointerWasTouch = false;
+    if (!isTouch || event.detail === 0) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (
+      trigger == null ||
+      !trigger.isConnected ||
+      getContent(trigger).length === 0 ||
+      (pinnedByTouch &amp;&amp; activeTrigger === trigger)
+    ) {
+      if (pinnedByTouch) {
+        closeTooltip();
+      }
+      return;
+    }
+    openTooltip(trigger);
+    pinnedByTouch = activeTrigger === trigger;
+    window.setTimeout(() =&gt; {
+      if (activeTrigger === trigger &amp;&amp; !trigger.isConnected) {
+        closeTooltip(false);
+      }
+    }, 0);
+  };
+  const handleLeave = (event) =&gt; {
+    if (pinnedByTouch) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    lastPointerWasTouch = false;
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    lastPointerWasTouch = false;
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerdown&quot;, handlePointer);
+    document.removeEventListener(&quot;pointercancel&quot;, handlePointer);
+    document.removeEventListener(&quot;click&quot;, handleTouchClick);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerdown&quot;, handlePointer);
+  document.addEventListener(&quot;pointercancel&quot;, handlePointer);
+  document.addEventListener(&quot;click&quot;, handleTouchClick);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+<script>
+const prototypeFrame = document.querySelector('iframe');
+const syncPrototypeState = () => {
+  const params = new URLSearchParams(window.location.search);
+  const app = params.get('app') || 'kyc';
+  const step = Math.max(Number(params.get('step') || 1) - 1, 0);
+  prototypeFrame.contentWindow.postMessage({type: 'finops-prototype-state', app, step}, '*');
+};
+prototypeFrame.addEventListener('load', syncPrototypeState);
+window.addEventListener('popstate', syncPrototypeState);
+</script>
+</body>
+</html>

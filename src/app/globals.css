@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cr-page: #f4f5f7;
+  --cr-panel: #ffffff;
+  --cr-text: #242424;
+  --cr-muted: #616161;
+  --cr-border: #dedee3;
+  --cr-primary: #742774;
+  --cr-primary-soft: #f4e9f5;
+  --cr-selection: #e7f3ff;
+  --cr-success: #107c10;
+  --cr-warning: #8a4600;
+  --cr-danger: #c42b1c;
+}
+
+.dark {
+  --cr-page: #15161a;
+  --cr-panel: #2a2b31;
+  --cr-text: #f1f1f3;
+  --cr-muted: #b6b6bd;
+  --cr-border: #484950;
+  --cr-primary: #c98acc;
+  --cr-primary-soft: #422844;
+  --cr-selection: #18344b;
+  --cr-success: #78c978;
+  --cr-warning: #f1b56f;
+  --cr-danger: #ff8f85;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--cr-page);
+    color: var(--cr-text);
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--cr-primary);
+    outline-offset: 2px;
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
