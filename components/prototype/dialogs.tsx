@@ -27,14 +27,15 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function ActionDialog({ model }: { model: KycPrototypeModel }) {
   const dialog = model.dialog;
   const panelRef = useRef<HTMLDivElement>(null);
+  const dialogKey = dialog ? `${dialog.kind}:${dialog.denied ? "denied" : "form"}` : null;
 
   useEffect(() => {
-    if (!dialog) return;
+    if (!dialogKey) return;
     const el = panelRef.current?.querySelector<HTMLElement>(
       "input, select, textarea, button",
     );
     el?.focus();
-  }, [dialog]);
+  }, [dialogKey]);
 
   if (!dialog || !model.selectedCase) return null;
   const kycCase = model.selectedCase;

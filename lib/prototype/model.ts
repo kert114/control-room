@@ -457,9 +457,10 @@ export function useKycPrototypeModel(): KycPrototypeModel {
     setSortState("risk");
     setManualSelection(null);
     setInspectorOpen(true);
-    appliedScenario.current = `default:${DEFAULT_CASE_ID}:approver`;
+    // Block the active scenario from re-applying itself before the URL settles.
+    appliedScenario.current = `${scenario}:${selectedCaseId}:${role}`;
     setParams({ state: null, role: null, case: null });
-  }, [setParams]);
+  }, [setParams, scenario, selectedCaseId, role]);
 
   const counts = useMemo(
     () => ({
