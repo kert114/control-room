@@ -3,11 +3,11 @@ import type { ModuleDefinition } from "@/platform/module/contract";
 export const refundsModule: ModuleDefinition = {
   id: "refunds",
   title: "Refunds",
-  summary: "Raise refunds against settled payments and approve them under the four-eyes rule.",
+  summary: "Review refund requests and decide them under the four-eyes rule.",
   route: "/refunds",
   readPermission: "refunds.read",
-  writePermissions: ["refunds.request", "refunds.approve"],
-  steps: ["Find payment", "Enter refund", "Approve"],
-  status: "placeholder",
+  writePermissions: ["refunds.request", "refunds.approve", "refunds.escalate"],
+  steps: ["Find refund", "Review request", "Decide"],
+  status: "live",
   owner: "Payment operations",
 };
