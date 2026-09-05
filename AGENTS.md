@@ -53,14 +53,14 @@ binding for every session that edits this repository.
 ## Synthetic data
 
 - All demo data is synthetic and labelled as such. Names use fictional entities.
-- `npm run db:seed` refuses to run unless `DEMO_MODE=true`, and it truncates and
+- `pnpm db:seed` refuses to run unless `DEMO_MODE=true`, and it truncates and
   rewrites only the seeded tables.
 - Never seed, paste, or fixture real customer data.
 
 ## Testing
 
-- `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` must pass
-  before a PR. `npm run test:e2e` needs a migrated and seeded database.
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` must pass
+  before a PR. `pnpm test:e2e` needs a migrated and seeded database.
 - Unit tests cover authorization, audit metadata, environment fail-closed
   behaviour, concurrency helpers, and the module registry. New rules need new
   unit tests.

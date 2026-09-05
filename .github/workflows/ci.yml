@@ -38,28 +38,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 22
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
-      - run: npm run lint
+      - run: pnpm lint
 
-      - run: npm run typecheck
+      - run: pnpm typecheck
 
-      - run: npm test
+      - run: pnpm test
 
-      - run: npm run db:migrate
+      - run: pnpm db:migrate
 
-      - run: npm run db:seed
+      - run: pnpm db:seed
 
-      - run: npm run build
+      - run: pnpm build
 
-      - run: npx playwright install --with-deps chromium
+      - run: pnpm exec playwright install --with-deps chromium
 
-      - run: npm run test:e2e
+      - run: pnpm test:e2e
 
       - if: failure()
         uses: actions/upload-artifact@v4
