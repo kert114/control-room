@@ -15,6 +15,12 @@ export const REFUND_TRANSITIONS: Record<
   settled: [],
 };
 
+const DECISION_BY_STATUS: Partial<Record<RefundStatus, Decision>> = {
+  approved: "approve",
+  rejected: "reject",
+  escalated: "escalate",
+};
+
 export function isTerminal(status: RefundStatus): boolean {
   return REFUND_TRANSITIONS[status].length === 0;
 }
@@ -32,7 +38,8 @@ export function assertTransition(
 }
 
 export function availableDecisions(status: RefundStatus): Decision[] {
-  if (status === "pending_approval") return ["approve", "reject", "escalate"];
-  if (status === "escalated") return ["approve", "reject"];
-  return [];
+  return REFUND_TRANSITIONS[status].flatMap((toStatus) => {
+    const decision = DECISION_BY_STATUS[toStatus];
+    return decision ? [decision] : [];
+  });
 }

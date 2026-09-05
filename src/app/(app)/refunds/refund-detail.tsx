@@ -2,11 +2,10 @@ import { ActivityTimeline } from "@/platform/ui/activity-timeline";
 import { EmptyState } from "@/platform/ui/empty-state";
 import { Panel } from "@/platform/ui/panel";
 import { StatusBadge } from "@/platform/ui/status-badge";
-import { can, type Role } from "@/platform/authz/policy";
+import type { Role } from "@/platform/authz/policy";
 
 import { DecisionForm } from "@/app/(app)/refunds/decision-form";
 import { formatDateTime, formatMoney, STATUS_LABEL, statusTone } from "@/modules/refunds/format";
-import { availableDecisions } from "@/modules/refunds/transitions";
 import type { Decision, ListParams } from "@/modules/refunds/params";
 import type { RefundDetail } from "@/modules/refunds/queries";
 
@@ -15,11 +14,13 @@ export function RefundDetailPanel({
   params,
   actor,
   missing,
+  allowedDecisions,
 }: {
   detail: RefundDetail | null;
   params: ListParams;
   actor: { id: string; name: string; role: Role };
   missing: boolean;
+  allowedDecisions: Decision[];
 }): React.ReactElement {
   return (
     <Panel title="Selected refund">
@@ -73,21 +74,12 @@ export function RefundDetailPanel({
               detail={detail}
               actor={actor}
               params={params}
-              allowedDecisions={allowedDecisions(detail.status, actor.role)}
+              allowedDecisions={allowedDecisions}
             />
           </div>
         </div>
       )}
     </Panel>
-  );
-}
-
-function allowedDecisions(
-  status: RefundDetail["status"],
-  role: Role,
-): Decision[] {
-  return availableDecisions(status).filter((decision) =>
-    can(role, decision === "escalate" ? "refunds.escalate" : "refunds.approve"),
   );
 }
 

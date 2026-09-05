@@ -13,7 +13,13 @@ import {
 import { formatMoney } from "@/modules/refunds/format";
 import type { VolumePoint } from "@/modules/refunds/queries";
 
-export function VolumeChart({ data }: { data: VolumePoint[] }): React.ReactElement {
+export function VolumeChart({
+  data,
+  currency,
+}: {
+  data: VolumePoint[];
+  currency: string;
+}): React.ReactElement {
   return (
     <div className="min-w-0 w-full overflow-hidden">
       <div className="h-28 w-full" role="img" aria-label="Refund volume by status">
@@ -44,7 +50,7 @@ export function VolumeChart({ data }: { data: VolumePoint[] }): React.ReactEleme
               formatter={(value, name, item) => {
                 if (name === "count") return [value, "Count"];
                 return [
-                  formatMoney(Number(item.payload.amountMinor), "EUR"),
+                  formatMoney(Number(item.payload.amountMinor), currency),
                   "Amount",
                 ];
               }}
@@ -57,9 +63,9 @@ export function VolumeChart({ data }: { data: VolumePoint[] }): React.ReactEleme
         <caption>Refund volume by status</caption>
         <thead>
           <tr>
-            <td>Status</td>
-            <td>Count</td>
-            <td>Amount</td>
+            <th scope="col">Status</th>
+            <th scope="col">Count</th>
+            <th scope="col">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -67,7 +73,7 @@ export function VolumeChart({ data }: { data: VolumePoint[] }): React.ReactEleme
             <tr key={point.status}>
               <td>{point.label}</td>
               <td>{point.count}</td>
-              <td>{formatMoney(point.amountMinor, "EUR")}</td>
+              <td>{formatMoney(point.amountMinor, currency)}</td>
             </tr>
           ))}
         </tbody>

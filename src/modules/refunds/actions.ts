@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requirePermission } from "@/platform/auth/session";
+import { AuthorizationError } from "@/platform/authz/errors";
 
 import {
   approveRefund,
@@ -49,7 +50,7 @@ export async function decideRefundAction(
     if (result.ok) revalidatePath("/refunds");
     return result;
   } catch (error: unknown) {
-    if (error instanceof Error && "code" in error && error.code === "forbidden") {
+    if (error instanceof AuthorizationError) {
       return {
         ok: false,
         code: "forbidden",

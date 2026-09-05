@@ -45,7 +45,7 @@ describe("refund decision planning", () => {
     expect(plan).toEqual({
       toStatus: "approved",
       action: "refund.approved",
-      summary: "Approve refund RFD-5001.",
+      summary: "Approved refund RFD-5001.",
       metadata: {
         amountMinor: 12500,
         currency: "EUR",

@@ -10,12 +10,12 @@ import type { RefundListItem } from "@/modules/refunds/queries";
 import { EmptyState } from "@/platform/ui/empty-state";
 import { StatusBadge } from "@/platform/ui/status-badge";
 
-function activeFilters(params: ListParams): string {
+function activeFilters(params: ListParams, currency: string): string {
   return [
     params.q ? `search “${params.q}”` : "",
     params.status !== "open" ? STATUS_LABEL[params.status as keyof typeof STATUS_LABEL] ?? params.status : "",
-    params.min !== undefined ? `minimum ${formatMoney(params.min, "EUR")}` : "",
-    params.max !== undefined ? `maximum ${formatMoney(params.max, "EUR")}` : "",
+    params.min !== undefined ? `minimum ${formatMoney(params.min, currency)}` : "",
+    params.max !== undefined ? `maximum ${formatMoney(params.max, currency)}` : "",
   ]
     .filter(Boolean)
     .join(", ");
@@ -24,12 +24,14 @@ function activeFilters(params: ListParams): string {
 export function RefundsTable({
   rows,
   params,
+  currency,
 }: {
   rows: RefundListItem[];
   params: ListParams;
+  currency: string;
 }): React.ReactElement {
   const router = useRouter();
-  const hasFilters = Boolean(activeFilters(params));
+  const hasFilters = Boolean(activeFilters(params, currency));
   const selectRow = (row: RefundListItem): void => {
     router.push(
       buildRefundsHref({
@@ -60,7 +62,7 @@ export function RefundsTable({
     return hasFilters ? (
       <EmptyState
         title="No refunds match these filters"
-        description={`No refund requests match ${activeFilters(params)}.`}
+        description={`No refund requests match ${activeFilters(params, currency)}.`}
         action={
           <Link href={buildRefundsHref({})} className="text-body text-primary underline">
             Clear filters

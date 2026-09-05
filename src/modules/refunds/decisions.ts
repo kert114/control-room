@@ -1,5 +1,10 @@
 import type { AuditAction, AuditMetadata } from "@/platform/audit/events";
-import { can, canApproveOwnRecord, type Role } from "@/platform/authz/policy";
+import {
+  can,
+  canApproveOwnRecord,
+  type Permission,
+  type Role,
+} from "@/platform/authz/policy";
 import {
   AuthorizationError,
   SeparationOfDutiesError,
@@ -44,6 +49,12 @@ const PERMISSION_BY_DECISION = {
   escalate: "refunds.escalate",
 } as const;
 
+const SUMMARY_VERB = {
+  approve: "Approved",
+  reject: "Rejected",
+  escalate: "Escalated",
+} as const;
+
 const STATUS_BY_DECISION = {
   approve: "approved",
   reject: "rejected",
@@ -56,11 +67,15 @@ const ACTION_BY_DECISION = {
   escalate: "refund.escalated",
 } as const;
 
+export function permissionForDecision(decision: Decision): Permission {
+  return PERMISSION_BY_DECISION[decision];
+}
+
 export function planDecision(input: DecisionInput): DecisionPlan {
   const { actor, decision, refund, policy } = input;
-  if (!can(actor.role, PERMISSION_BY_DECISION[decision])) {
+  if (!can(actor.role, permissionForDecision(decision))) {
     throw new AuthorizationError(
-      `Role ${actor.role} is not allowed to ${PERMISSION_BY_DECISION[decision]}.`,
+      `Role ${actor.role} is not allowed to ${permissionForDecision(decision)}.`,
     );
   }
 
@@ -93,7 +108,7 @@ export function planDecision(input: DecisionInput): DecisionPlan {
   return {
     toStatus,
     action: ACTION_BY_DECISION[decision],
-    summary: `${decision.charAt(0).toUpperCase()}${decision.slice(1)} refund ${refund.reference}.`,
+    summary: `${SUMMARY_VERB[decision]} refund ${refund.reference}.`,
     metadata: {
       amountMinor: refund.amountMinor,
       currency: refund.currency,

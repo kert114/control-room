@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -54,7 +53,6 @@ export function DecisionForm({
     null,
   );
   const [decisionNote, setDecisionNote] = useState("");
-  const pathname = usePathname();
   const decision = params.decision;
   const available = availableDecisions(detail.status);
   const currentDecision =
@@ -90,7 +88,9 @@ export function DecisionForm({
         <p className="text-body text-muted">
           {actor.role === "auditor"
             ? "Read only: the auditor role can view refunds but cannot decide them."
-            : "Only approvers and administrators can approve or reject. You can escalate this refund."}
+            : actor.role === "operator"
+              ? "Only approvers and administrators can approve or reject this refund."
+              : "Your role cannot decide this refund."}
         </p>
       );
     }
@@ -202,7 +202,6 @@ export function DecisionForm({
       {result && !result.ok && result.code === "validation" && !fieldError ? (
         <p role="alert" className="text-body text-danger">{result.message}</p>
       ) : null}
-      <span className="sr-only">{pathname}</span>
     </form>
   );
 }

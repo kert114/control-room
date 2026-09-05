@@ -6,7 +6,7 @@ import { RefundsTable } from "@/app/(app)/refunds/refunds-table";
 import { RefundSummaryRow } from "@/app/(app)/refunds/refund-summary";
 import { StepControl } from "@/app/(app)/refunds/step-control";
 import { VolumeChart } from "@/app/(app)/refunds/volume-chart";
-import type { ListParams } from "@/modules/refunds/params";
+import type { Decision, ListParams } from "@/modules/refunds/params";
 import type {
   RefundDetail,
   RefundListItem,
@@ -24,6 +24,7 @@ export function RefundsWorkspace({
   detail,
   policy,
   missing,
+  allowedDecisions,
 }: {
   actor: Actor;
   params: ListParams;
@@ -33,8 +34,10 @@ export function RefundsWorkspace({
   detail: RefundDetail | null;
   policy: { thresholdMinor: number; currency: string } | null;
   missing: boolean;
+  allowedDecisions: Decision[];
 }): React.ReactElement {
   const thresholdMinor = policy?.thresholdMinor ?? 0;
+  const currency = policy?.currency ?? "EUR";
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -49,10 +52,10 @@ export function RefundsWorkspace({
           <div className="flex flex-col gap-3">
             <RefundSummaryRow summary={summary} thresholdMinor={thresholdMinor} />
             <RefundsFilters params={params} />
-            <RefundsTable rows={list} params={params} />
+            <RefundsTable rows={list} params={params} currency={currency} />
             <div>
               <h3 className="mb-1 text-section font-medium text-ink">Volume by status</h3>
-              <VolumeChart data={volume} />
+              <VolumeChart data={volume} currency={currency} />
             </div>
           </div>
         </Panel>
@@ -61,6 +64,7 @@ export function RefundsWorkspace({
           params={params}
           actor={actor}
           missing={missing}
+          allowedDecisions={allowedDecisions}
         />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import type { Actor } from "@/platform/auth/session";
 import type { RefundRow } from "@/platform/db/schema";
@@ -70,12 +70,8 @@ function actionResult(
     return Promise.resolve(validationResult(parsed.error));
   }
 
-  const decisionNote: string | undefined =
-    decision === "reject" &&
-    "decisionNote" in parsed.data &&
-    typeof parsed.data.decisionNote === "string"
-      ? parsed.data.decisionNote
-      : undefined;
+  const decisionNote =
+    "decisionNote" in parsed.data ? parsed.data.decisionNote : undefined;
   return withBusinessTransaction(async ({ tx, audit }) => {
     const [refund] = await tx
       .select()
@@ -109,7 +105,7 @@ function actionResult(
         version: bumpVersion(refunds),
         updatedAt: now,
         ...(decision === "reject"
-          ? { decisionNote }
+          ? { decisionNote: decisionNote as string }
           : {}),
         ...(decision === "escalate"
           ? { escalatedById: actor.id, escalatedAt: now }
@@ -118,7 +114,7 @@ function actionResult(
           ? { approvedById: actor.id, decidedAt: now }
           : {}),
       })
-      .where(and(versionedWhere(refunds, parsed.data.id, parsed.data.version)))
+      .where(versionedWhere(refunds, parsed.data.id, parsed.data.version))
       .returning();
     const updated = assertRowUpdated(
       [row].filter((value): value is RefundRow => Boolean(value)),
