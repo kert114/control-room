@@ -119,16 +119,17 @@ test.describe("feature flags", () => {
     await selectFlag(page, "new-audit-explorer", "development");
     const form = detail(page).locator("form", { hasText: "Set rollout" });
 
+    await form.getByLabel("On", { exact: true }).check();
     await form.getByLabel("Rollout percentage").fill("250");
     await form.getByLabel("Reason").fill("Widen the developer preview cohort.");
     await form.getByRole("button", { name: "Apply flag change" }).click();
     await expect(page.getByTestId("form-invalid")).toBeVisible();
     await expect(form.getByText("Rollout cannot exceed 100%.")).toBeVisible();
     await expect(form.getByLabel("Reason")).toHaveValue("Widen the developer preview cohort.");
+    await expect(form.getByLabel("On", { exact: true })).toBeChecked();
 
     // Vary the target so re-runs against the same database still produce a change.
     const rollout = String(10 + (Date.now() % 80));
-    await form.getByLabel("On", { exact: true }).check();
     await form.getByLabel("Rollout percentage").fill(rollout);
     await form.getByRole("button", { name: "Apply flag change" }).click();
     await expect(page.getByTestId("outcome-notice")).toContainText("Flag updated");

@@ -64,6 +64,10 @@ export function RolloutForm({
                 name="enabled"
                 value={value}
                 checked={enabled === value}
+                // Form actions reset the form; keep the reset target in step with the controlled value.
+                ref={(element) => {
+                  if (element) element.defaultChecked = enabled === value;
+                }}
                 onChange={() => setEnabled(value)}
                 className="h-4 w-4 accent-primary"
               />
