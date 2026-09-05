@@ -102,7 +102,8 @@ export function CaseActionForm({
   const router = useRouter();
   const formRef = React.useRef<HTMLFormElement>(null);
   const announce = React.useContext(OutcomeContext)?.announce;
-  const [state, dispatch, pending] = React.useActionState(
+  const [submittedVersion, setSubmittedVersion] = React.useState(version);
+  const [lastState, dispatch, pending] = React.useActionState(
     async (previous: ActionState, formData: FormData) => {
       const next = await action(previous, formData);
       if (next.status === "success") {
@@ -118,6 +119,9 @@ export function CaseActionForm({
     idleState,
   );
   const [reviewOpen, setReviewOpen] = React.useState(false);
+  // A result only describes the record version it was submitted against; once
+  // the server re-renders a newer version the form starts clean again.
+  const state = submittedVersion === version ? lastState : idleState;
 
   React.useEffect(() => {
     if (state.status !== "idle") setReviewOpen(false);
@@ -125,14 +129,13 @@ export function CaseActionForm({
 
   const fieldErrors = state.status === "invalid" ? state.fieldErrors : {};
   const conflict = state.status === "version_conflict";
-  const done = state.status === "success";
 
   const submitButton = (
     <Button
       type={review ? "button" : "submit"}
       variant={variant}
       className="h-11 w-full md:h-9 md:w-auto"
-      disabled={pending || conflict || done}
+      disabled={pending || conflict}
     >
       {pending ? "Working…" : submitLabel}
     </Button>
@@ -144,6 +147,7 @@ export function CaseActionForm({
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
+        setSubmittedVersion(version);
         React.startTransition(() => dispatch(formData));
       }}
       className={className ?? "flex flex-col gap-3"}
