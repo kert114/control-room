@@ -8,6 +8,13 @@
       "when": 1788549115508,
       "tag": "0000_happy_luke_cage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788621323092,
+      "tag": "0001_module_contracts",
+      "breakpoints": true
     }
   ]
 }
