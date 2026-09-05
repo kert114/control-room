@@ -105,6 +105,10 @@ test.describe("refunds workflow", () => {
     await page.locator("table").first().locator("tbody tr").filter({ hasText: "RFD-5005" }).click();
     await page.getByRole("link", { name: "Approve" }).click();
     await page.getByRole("button", { name: "Approve refund" }).click();
+    await page.locator("table").first().locator("tbody tr").filter({ hasText: "RFD-5002" }).click();
+    await page.getByRole("link", { name: "Reject" }).click();
+    await expect(page.getByText("Refund RFD-5005 approved", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Reject refund" })).toBeVisible();
     await page.goto("/refunds?status=all");
     await page.locator("table").first().locator("tbody tr").filter({ hasText: "RFD-5005" }).click();
     await expect(page.getByRole("definition").filter({ hasText: "Approved" })).toBeVisible();

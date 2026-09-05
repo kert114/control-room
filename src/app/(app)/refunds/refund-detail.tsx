@@ -71,6 +71,7 @@ export function RefundDetailPanel({
               {params.step >= 3 ? "Decide" : "Review request"}
             </h3>
             <DecisionForm
+              key={`${detail.id}:${params.decision ?? "choose"}`}
               detail={detail}
               actor={actor}
               params={params}
