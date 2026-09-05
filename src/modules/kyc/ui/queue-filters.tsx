@@ -47,8 +47,19 @@ export function QueueFilters({
   reviewers,
   countries,
 }: QueueFiltersProps): React.ReactElement {
+  const filterKey = [
+    params.q,
+    params.status,
+    params.risk,
+    params.country,
+    params.assignee,
+    params.sla,
+  ]
+    .map((value) => value ?? "")
+    .join("|");
   return (
     <form
+      key={filterKey}
       method="get"
       action={KYC_ROUTE}
       className="grid grid-cols-2 gap-2 md:grid-cols-4"
