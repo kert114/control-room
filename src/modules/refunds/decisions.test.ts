@@ -7,7 +7,7 @@ import {
 import { AuthorizationError, SeparationOfDutiesError } from "@/platform/authz/errors";
 import { BusinessRuleError } from "@/platform/mutations/errors";
 
-import { planDecision } from "@/modules/refunds/decisions";
+import { describeDecisions, planDecision } from "@/modules/refunds/decisions";
 import { availableDecisions, isTerminal } from "@/modules/refunds/transitions";
 
 const operator = { id: "operator", role: "operator" as const };
@@ -157,5 +157,33 @@ describe("refund decision planning", () => {
     expect(isTerminal("draft")).toBe(true);
     expect(isTerminal("settled")).toBe(true);
     expect(isTerminal("pending_approval")).toBe(false);
+  });
+});
+
+describe("describeDecisions", () => {
+  it("explains blocked decisions before the user clicks", () => {
+    const options = describeDecisions({
+      actor: approver,
+      refund: refund({ amountMinor: 61000 }),
+      policy,
+    });
+    expect(options.map((option) => option.decision)).toEqual(["approve", "reject", "escalate"]);
+    expect(options[0]?.blockedBy).toMatch(/€500\.00/);
+    expect(options[1]?.blockedBy).toBeNull();
+    expect(options[2]?.blockedBy).toMatch(/cannot escalate/);
+  });
+
+  it("marks self-escalated refunds as blocked for the escalator", () => {
+    const options = describeDecisions({
+      actor: administrator,
+      refund: refund({ status: "escalated", escalatedById: "administrator" }),
+      policy,
+    });
+    expect(options.find((option) => option.decision === "approve")?.blockedBy).toMatch(/escalated/);
+    expect(options.find((option) => option.decision === "reject")?.blockedBy).toBeNull();
+  });
+
+  it("returns nothing for terminal refunds", () => {
+    expect(describeDecisions({ actor: approver, refund: refund({ status: "approved" }), policy })).toEqual([]);
   });
 });

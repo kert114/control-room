@@ -16,7 +16,7 @@ import type {
 } from "@/platform/db/schema";
 
 import { thresholdMessage, requiresEscalation } from "@/modules/refunds/policy";
-import { assertTransition } from "@/modules/refunds/transitions";
+import { assertTransition, availableDecisions } from "@/modules/refunds/transitions";
 import type { Decision } from "@/modules/refunds/params";
 import type { RefundStatus } from "@/modules/refunds/params";
 
@@ -69,6 +69,32 @@ const ACTION_BY_DECISION = {
 
 export function permissionForDecision(decision: Decision): Permission {
   return PERMISSION_BY_DECISION[decision];
+}
+
+export interface DecisionOption {
+  decision: Decision;
+  blockedBy: string | null;
+}
+
+/** Non-throwing preview of `planDecision` so the UI can explain a block before the click. */
+export function describeDecisions(input: Omit<DecisionInput, "decision">): DecisionOption[] {
+  return availableDecisions(input.refund.status).map((decision) => {
+    try {
+      planDecision({ ...input, decision });
+      return { decision, blockedBy: null };
+    } catch (error: unknown) {
+      if (error instanceof SeparationOfDutiesError || error instanceof BusinessRuleError) {
+        return { decision, blockedBy: error.message };
+      }
+      if (error instanceof AuthorizationError) {
+        return {
+          decision,
+          blockedBy: `The ${input.actor.role} role cannot ${decision} refunds.`,
+        };
+      }
+      throw error;
+    }
+  });
 }
 
 export function planDecision(input: DecisionInput): DecisionPlan {

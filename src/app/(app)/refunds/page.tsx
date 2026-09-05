@@ -1,10 +1,17 @@
+import Link from "next/link";
+
 import { can } from "@/platform/authz/policy";
 import { requirePermission } from "@/platform/auth/session";
 
 import { RefundsWorkspace } from "@/app/(app)/refunds/refunds-workspace";
 import { permissionForDecision } from "@/modules/refunds/decisions";
 import { getPolicy, getRefundDetail, listRefunds, summarizeRefunds, volumeByStatus } from "@/modules/refunds/queries";
-import { parseListParams, type ListParams } from "@/modules/refunds/params";
+import {
+  buildRefundsHref,
+  parseListParams,
+  REFUNDS_COMPARE_PATH,
+  type ListParams,
+} from "@/modules/refunds/params";
 import { availableDecisions } from "@/modules/refunds/transitions";
 
 export const dynamic = "force-dynamic";
@@ -46,16 +53,30 @@ export default async function RefundsPage({
   };
 
   return (
-    <RefundsWorkspace
-      actor={actor}
-      params={params}
-      list={list}
-      summary={summary}
-      volume={volume}
-      detail={detail}
-      policy={policy}
-      missing={Boolean(params.refund) && !detail}
-      allowedDecisions={allowedDecisions}
-    />
+    <div className="flex flex-col gap-3">
+      <p className="rounded-control border border-line bg-panel px-3 py-2 text-meta text-muted">
+        Variant A (staged decision).{" "}
+        <Link
+          href={buildRefundsHref(
+            { ...params, decision: undefined, step: params.step === 3 ? 2 : params.step },
+            REFUNDS_COMPARE_PATH,
+          )}
+          className="text-primary underline"
+        >
+          Switch to variant B
+        </Link>
+      </p>
+      <RefundsWorkspace
+        actor={actor}
+        params={params}
+        list={list}
+        summary={summary}
+        volume={volume}
+        detail={detail}
+        policy={policy}
+        missing={Boolean(params.refund) && !detail}
+        allowedDecisions={allowedDecisions}
+      />
+    </div>
   );
 }

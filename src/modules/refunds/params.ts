@@ -109,8 +109,12 @@ export function parseListParams(
   return parsed.data;
 }
 
+export const REFUNDS_PATH = "/refunds";
+export const REFUNDS_COMPARE_PATH = "/refunds/compare";
+
 export function buildRefundsHref(
   params: Partial<ListParams>,
+  basePath: string = REFUNDS_PATH,
 ): string {
   const query = new URLSearchParams();
   const q = params.q?.trim();
@@ -124,7 +128,7 @@ export function buildRefundsHref(
   if (params.step && params.step !== 1) query.set("step", String(params.step));
   if (params.decision) query.set("decision", params.decision);
   const serialized = query.toString();
-  return serialized ? `/refunds?${serialized}` : "/refunds";
+  return serialized ? `${basePath}?${serialized}` : basePath;
 }
 
 export type RefundStatus = (typeof REFUND_STATUSES)[number];

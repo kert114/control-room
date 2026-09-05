@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
-import { buildRefundsHref, type ListParams } from "@/modules/refunds/params";
+import { buildRefundsHref, REFUNDS_PATH, type ListParams } from "@/modules/refunds/params";
 import { formatDateTime, formatMoney, STATUS_LABEL, statusTone } from "@/modules/refunds/format";
 import type { RefundListItem } from "@/modules/refunds/queries";
 import { EmptyState } from "@/platform/ui/empty-state";
@@ -25,16 +25,21 @@ export function RefundsTable({
   rows,
   params,
   currency,
+  basePath = REFUNDS_PATH,
+  thresholdMinor,
 }: {
   rows: RefundListItem[];
   params: ListParams;
   currency: string;
+  basePath?: string;
+  thresholdMinor?: number;
 }): React.ReactElement {
   const router = useRouter();
+  const href = (next: Partial<ListParams>): string => buildRefundsHref(next, basePath);
   const hasFilters = Boolean(activeFilters(params, currency));
   const selectRow = (row: RefundListItem): void => {
     router.push(
-      buildRefundsHref({
+      href({
         ...params,
         refund: row.id,
         step: 2,
@@ -43,7 +48,7 @@ export function RefundsTable({
     );
   };
   const sortHref = (sort: ListParams["sort"]): string =>
-    buildRefundsHref({
+    href({
       ...params,
       sort,
       dir: params.sort === sort && params.dir === "asc" ? "desc" : "asc",
@@ -64,7 +69,7 @@ export function RefundsTable({
         title="No refunds match these filters"
         description={`No refund requests match ${activeFilters(params, currency)}.`}
         action={
-          <Link href={buildRefundsHref({})} className="text-body text-primary underline">
+          <Link href={href({})} className="text-body text-primary underline">
             Clear filters
           </Link>
         }
@@ -132,7 +137,7 @@ export function RefundsTable({
               >
                 <td data-label="Reference" className="block px-3 py-2 align-middle before:mr-2 before:block before:text-meta before:font-medium before:uppercase before:tracking-wide before:text-muted before:content-[attr(data-label)] lg:table-cell lg:before:hidden">
                   <Link
-                    href={buildRefundsHref({ ...params, refund: row.id, step: 2, decision: undefined })}
+                    href={href({ ...params, refund: row.id, step: 2, decision: undefined })}
                     onClick={(event) => event.stopPropagation()}
                     className="underline"
                   >
@@ -148,6 +153,13 @@ export function RefundsTable({
                 </td>
                 <td data-label="Amount" className="block px-3 py-2 text-left align-middle before:mr-2 before:block before:text-meta before:font-medium before:uppercase before:tracking-wide before:text-muted before:content-[attr(data-label)] lg:table-cell lg:text-right lg:before:hidden">
                   {formatMoney(row.amountMinor, row.currency)}
+                  {thresholdMinor !== undefined &&
+                  row.amountMinor > thresholdMinor &&
+                  (row.status === "pending_approval" || row.status === "escalated") ? (
+                    <span className="block text-meta text-muted">
+                      {row.status === "pending_approval" ? "Needs escalation" : "Above threshold"}
+                    </span>
+                  ) : null}
                 </td>
                 <td data-label="Status" className="block px-3 py-2 align-middle before:mr-2 before:block before:text-meta before:font-medium before:uppercase before:tracking-wide before:text-muted before:content-[attr(data-label)] lg:table-cell lg:before:hidden">
                   <StatusBadge label={STATUS_LABEL[row.status]} tone={statusTone(row.status)} />

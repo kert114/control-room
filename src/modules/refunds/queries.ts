@@ -102,6 +102,8 @@ export interface RefundHistoryEntry {
 }
 
 export interface RefundDetail extends RefundListItem {
+  requestedById: string;
+  escalatedById: string | null;
   reason: string;
   decisionNote: string | null;
   approverName: string | null;
@@ -124,6 +126,8 @@ export async function getRefundDetail(id: string): Promise<RefundDetail | null> 
       requesterName: requester.name,
       createdAt: refunds.createdAt,
       version: refunds.version,
+      requestedById: refunds.requestedById,
+      escalatedById: refunds.escalatedById,
       reason: refunds.reason,
       decisionNote: refunds.decisionNote,
       approverName: approver.name,

@@ -1,13 +1,19 @@
 import Link from "next/link";
 
-import { buildRefundsHref, type ListParams } from "@/modules/refunds/params";
+import { buildRefundsHref, REFUNDS_PATH, type ListParams } from "@/modules/refunds/params";
 
-export function RefundsFilters({ params }: { params: ListParams }): React.ReactElement {
+export function RefundsFilters({
+  params,
+  basePath = REFUNDS_PATH,
+}: {
+  params: ListParams;
+  basePath?: string;
+}): React.ReactElement {
   return (
     <form
       key={`${params.q}|${params.status}|${params.min ?? ""}|${params.max ?? ""}`}
       method="get"
-      action="/refunds"
+      action={basePath}
       className="flex flex-col gap-2"
     >
       <div className="grid gap-2 md:grid-cols-2">
@@ -66,7 +72,7 @@ export function RefundsFilters({ params }: { params: ListParams }): React.ReactE
         >
           Apply filters
         </button>
-        <Link href={buildRefundsHref({})} className="text-body text-primary underline">
+        <Link href={buildRefundsHref({}, basePath)} className="text-body text-primary underline">
           Clear filters
         </Link>
       </div>
