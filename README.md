@@ -39,10 +39,10 @@ follow automatically.
 
 ```bash
 cp .env.example .env.local   # set DATABASE_URL and AUTH_SECRET
-npm install
-npm run db:migrate
-npm run db:seed              # synthetic data; requires DEMO_MODE=true
-npm run dev
+pnpm install
+pnpm db:migrate
+pnpm db:seed               # synthetic data; requires DEMO_MODE=true
+pnpm dev
 ```
 
 Demo accounts (only when `DEMO_MODE=true`), password `control-room-demo`:
@@ -58,15 +58,15 @@ Demo accounts (only when `DEMO_MODE=true`), password `control-room-demo`:
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Development server |
-| `npm run build` / `npm start` | Production build and server |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest unit tests |
-| `npm run test:e2e` | Playwright browser tests (needs a migrated, seeded database) |
-| `npm run db:generate` | Generate a migration from the Drizzle schema |
-| `npm run db:migrate` | Apply migrations |
-| `npm run db:seed` | Load synthetic demo data |
+| `pnpm dev` | Development server |
+| `pnpm build` / `pnpm start` | Production build and server |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | Vitest unit tests |
+| `pnpm test:e2e` | Playwright browser tests (needs a migrated, seeded database) |
+| `pnpm db:generate` | Generate a migration from the Drizzle schema |
+| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:seed` | Load synthetic demo data |
 
 Contributor rules live in [AGENTS.md](./AGENTS.md); the pre-PR quality gate is
 [.agents/skills/verify-fintech-tool/SKILL.md](./.agents/skills/verify-fintech-tool/SKILL.md).

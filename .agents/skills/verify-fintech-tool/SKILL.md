@@ -40,8 +40,8 @@ cause instead. Record the exact command output for the PR.
 
 ## 4. Browser checks
 
-- `npm run db:migrate && npm run db:seed` (requires `DEMO_MODE=true`).
-- `npm run build && npm run test:e2e`.
+- `pnpm db:migrate && pnpm db:seed` (requires `DEMO_MODE=true`).
+- `pnpm build && pnpm test:e2e`.
 - Manually or with a test, for each role: the tool's happy path, the read-only
   auditor view, an empty state, a validation failure, and a rejected approval by
   the requester.
@@ -50,10 +50,10 @@ cause instead. Record the exact command output for the PR.
 
 ## 5. Build verification
 
-- `npm run lint`
-- `npm run typecheck`
-- `npm test`
-- `npm run build`
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`
 
 ## 6. Report
 
