@@ -48,8 +48,12 @@ export function RefundsWorkspace({
       </div>
       <StepControl params={params} hasSelection={Boolean(detail)} />
       <div className="grid gap-3 lg:grid-cols-[65fr_35fr]">
-        <Panel title="Refund queue" description="Open refund requests appear first. Search and filter without losing your selection.">
-          <div className="flex flex-col gap-3">
+        <Panel
+          title="Refund queue"
+          description="Open refund requests appear first. Search and filter without losing your selection."
+          className="min-w-0"
+        >
+          <div className="flex min-w-0 flex-col gap-3">
             <RefundSummaryRow summary={summary} thresholdMinor={thresholdMinor} />
             <RefundsFilters params={params} />
             <RefundsTable rows={list} params={params} currency={currency} />

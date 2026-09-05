@@ -4,7 +4,12 @@ import { buildRefundsHref, type ListParams } from "@/modules/refunds/params";
 
 export function RefundsFilters({ params }: { params: ListParams }): React.ReactElement {
   return (
-    <form method="get" action="/refunds" className="flex flex-col gap-2">
+    <form
+      key={`${params.q}|${params.status}|${params.min ?? ""}|${params.max ?? ""}`}
+      method="get"
+      action="/refunds"
+      className="flex flex-col gap-2"
+    >
       <div className="grid gap-2 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-meta font-medium text-muted">
           Search refunds
