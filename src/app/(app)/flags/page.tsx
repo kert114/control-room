@@ -1,10 +1,12 @@
 import * as React from "react";
 
+import { getServiceHealth } from "@/modules/flags/health/registry";
 import { flagsModule } from "@/modules/flags/module";
 import {
   countFlags,
   getChangeRequestDetail,
   getFlagDetail,
+  listFlagKeys,
   listFlags,
   listOwners,
   parseFlagsQuery,
@@ -13,6 +15,7 @@ import {
 import { FlagDetailPanel } from "@/modules/flags/ui/flag-detail";
 import { FlagFilters } from "@/modules/flags/ui/flag-filters";
 import { FlagTable } from "@/modules/flags/ui/flag-table";
+import { ServiceHealthPanel } from "@/modules/flags/ui/service-health";
 import { WorkflowSteps, type WorkflowStep } from "@/modules/flags/ui/workflow-steps";
 import { requirePermission } from "@/platform/auth/session";
 import { EmptyState } from "@/platform/ui/empty-state";
@@ -28,11 +31,13 @@ export default async function FlagsPage({
   const actor = await requirePermission("flags.read");
   const query = parseFlagsQuery(await searchParams);
 
-  const [flags, owners, totalCount, flag] = await Promise.all([
+  const [flags, flagKeys, owners, totalCount, flag, health] = await Promise.all([
     listFlags(query),
+    listFlagKeys(),
     listOwners(),
     countFlags(),
     query.flag ? getFlagDetail(query.flag) : Promise.resolve(null),
+    getServiceHealth(),
   ]);
 
   const requestId = flag ? (query.request ?? flag.openRequest?.id) : undefined;
@@ -59,7 +64,7 @@ export default async function FlagsPage({
           description="Search, filters, sort, and selection are kept in the address bar so any view can be shared or reloaded."
         >
           <div className="flex flex-col gap-3">
-            <FlagFilters query={query} owners={owners} />
+            <FlagFilters query={query} flagKeys={flagKeys} owners={owners} />
             <FlagTable
               query={query}
               totalCount={totalCount}
@@ -78,6 +83,7 @@ export default async function FlagsPage({
           </div>
         </Panel>
 
+        <div className="flex flex-col gap-3">
         <Panel
           title="Selected flag"
           description={
@@ -100,6 +106,13 @@ export default async function FlagsPage({
             />
           )}
         </Panel>
+        <Panel
+          title="Service health"
+          description="Monitoring signals for the services behind these flags. Synthetic data from mock providers."
+        >
+          <ServiceHealthPanel snapshot={health} highlightOwner={flag?.owner} />
+        </Panel>
+        </div>
       </div>
     </div>
   );

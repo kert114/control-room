@@ -137,6 +137,47 @@ test.describe("feature flags", () => {
     await expect(detail(page)).toContainText("Updated new-audit-explorer in development");
   });
 
+  test("flag picker filters by exact key without typing and survives reload", async ({ page }) => {
+    await signIn(page, ACCOUNTS.operator);
+    await openFlags(page, "/flags");
+    await page.getByLabel("Flag", { exact: true }).selectOption("instant-refunds");
+    await page.getByRole("button", { name: "Filter flags" }).click();
+    await expect(page).toHaveURL(/key=instant-refunds/);
+    await expect(page.getByTestId("flag-row")).toHaveCount(2);
+    await page.reload();
+    await expect(page.getByLabel("Flag", { exact: true })).toHaveValue("instant-refunds");
+    await expect(page.getByTestId("flag-row")).toHaveCount(2);
+    await page.getByRole("link", { name: "Clear filters" }).click();
+    await expect(page).toHaveURL(/\/flags$/);
+  });
+
+  test("service health panel shows normalised signals from every mock provider", async ({ page }) => {
+    await signIn(page, ACCOUNTS.auditor);
+    await openFlags(page, "/flags");
+    const health = page.getByTestId("service-health");
+    await expect(health).toContainText("Sources: Datadog, Grafana, Sentry, Company status page");
+    await expect(health.getByText("Overall").locator("..")).toContainText("Degraded");
+    await expect(health.getByRole("listitem")).toHaveCount(7);
+    await expect(health.getByRole("listitem").filter({ hasText: "kyc-triage queue depth" })).toContainText(
+      "Degraded",
+    );
+  });
+
+  test("administrator restricts a development rollout to selected regions", async ({ page }) => {
+    await signIn(page, ACCOUNTS.administrator);
+    await openFlags(page, "/flags?env=development");
+    await selectFlag(page, "kyc-auto-triage", "development");
+    const form = detail(page).locator("form", { hasText: "Set rollout" });
+
+    const before = await form.getByLabel("Estonia (EE)").isChecked();
+    await form.getByLabel("Estonia (EE)").setChecked(!before);
+    await form.getByLabel("Reason").fill("Limit the triage preview to one region.");
+    await form.getByRole("button", { name: "Apply flag change" }).click();
+    await expect(page.getByTestId("outcome-notice")).toContainText("Flag updated");
+    await expect(detail(page)).toContainText(before ? "Everyone in the rollout" : "country is one of EE");
+    await expect(form.getByLabel("Estonia (EE)")).toHaveJSProperty("checked", !before);
+  });
+
   test("production change needs a second person: operator requests, approver applies", async ({
     page,
   }) => {

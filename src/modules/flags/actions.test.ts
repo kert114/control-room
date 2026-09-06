@@ -18,6 +18,7 @@ import {
   requestKillSwitch,
   type FlagsActionResult,
 } from "@/modules/flags/actions";
+import type { RegionCode } from "@/modules/flags/targeting";
 
 /**
  * Integration tests for the module interface. They need DATABASE_URL (CI provides
@@ -89,13 +90,19 @@ function fail(result: FlagsActionResult) {
   return result;
 }
 
-const rollout = (flag: { id: string; version: number }, enabled: boolean, pct: number) => ({
+const rollout = (
+  flag: { id: string; version: number },
+  enabled: boolean,
+  pct: number,
+  regions: RegionCode[] = [],
+) => ({
   flagId: flag.id,
   flagVersion: flag.version,
   enabled,
   rolloutPercentage: pct,
   reason: "Synthetic reason for the test run.",
   ticket: undefined,
+  regions,
 });
 
 describe.skipIf(!hasDatabase)("flags actions (database)", () => {
@@ -152,6 +159,23 @@ describe.skipIf(!hasDatabase)("flags actions (database)", () => {
     expect(events.map((event) => event.action)).toEqual(["flag.updated"]);
     expect(events[0]?.entityVersion).toBe(2);
     expect(() => assertNoSensitiveMetadata(events[0]?.metadata as AuditMetadata)).not.toThrow();
+  });
+
+  it("restricts a direct change to selected regions and treats a region-only change as a change", async () => {
+    const flag = await insertFlag("dev-regions", "development");
+    ok(await applyDirectChange(admin, rollout(flag, true, 100, ["FI", "EE"])));
+    let updated = await flagById(flag.id);
+    expect(updated.targeting).toEqual([{ attribute: "country", operator: "in", values: ["EE", "FI"] }]);
+
+    expect(fail(await applyDirectChange(admin, rollout(updated, true, 100, ["EE", "FI"]))).code).toBe(
+      "business_rule",
+    );
+
+    ok(await applyDirectChange(admin, rollout(updated, true, 100, [])));
+    updated = await flagById(flag.id);
+    expect(updated.targeting).toEqual([]);
+    expect(updated.version).toBe(3);
+    expect((await auditFor(flag.id)).map((event) => event.action)).toEqual(["flag.updated", "flag.updated"]);
   });
 
   it("refuses direct production edits and non-administrator direct edits", async () => {

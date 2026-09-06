@@ -63,6 +63,10 @@ export async function listFlags(
       conditions.push(match);
     }
   }
+  if (query.key) {
+    conditions.push(eq(featureFlags.key, query.key));
+  }
+
   if (query.env) {
     conditions.push(eq(featureFlags.environment, query.env));
   }
@@ -119,6 +123,14 @@ export async function countFlags(executor: Executor = db): Promise<number> {
     .select({ count: sql<number>`count(*)::int` })
     .from(featureFlags);
   return row?.count ?? 0;
+}
+
+export async function listFlagKeys(executor: Executor = db): Promise<string[]> {
+  const rows = await executor
+    .selectDistinct({ key: featureFlags.key })
+    .from(featureFlags)
+    .orderBy(asc(featureFlags.key));
+  return rows.map((row) => row.key);
 }
 
 export async function listOwners(executor: Executor = db): Promise<string[]> {

@@ -40,9 +40,17 @@ import type { NoticeCode } from "@/modules/flags/url-state";
 import type {
   CancelInput,
   DecisionInput,
+  DirectChangeInput,
   KillSwitchInput,
   RolloutChangeInput,
 } from "@/modules/flags/schemas";
+import {
+  parseTargeting,
+  regionsFromTargeting,
+  sameRegions,
+  withRegions,
+  type TargetingRule,
+} from "@/modules/flags/targeting";
 
 export interface ActionOutcome {
   notice: NoticeCode;
@@ -122,13 +130,15 @@ async function nextReference(tx: Transaction): Promise<string> {
 function assertIsAChange(
   flag: Pick<FeatureFlagRow, "enabled" | "rolloutPercentage">,
   proposed: Pick<RolloutChangeInput, "enabled" | "rolloutPercentage">,
+  targetingChanged = false,
 ): void {
   if (
+    !targetingChanged &&
     flag.enabled === proposed.enabled &&
     flag.rolloutPercentage === proposed.rolloutPercentage
   ) {
     throw new BusinessRuleError(
-      "The proposed state matches the current state. Change the switch or the rollout percentage.",
+      "The proposed state matches the current state. Change the switch, the rollout percentage, or the regions.",
     );
   }
 }
@@ -137,6 +147,7 @@ interface FlagUpdate {
   enabled: boolean;
   rolloutPercentage: number;
   killedAt: Date | null;
+  targeting?: TargetingRule[];
 }
 
 async function updateFlag(
@@ -151,6 +162,7 @@ async function updateFlag(
       enabled: update.enabled,
       rolloutPercentage: update.rolloutPercentage,
       killedAt: update.killedAt,
+      ...(update.targeting ? { targeting: update.targeting } : {}),
       updatedById: actor.id,
       updatedAt: new Date(),
       version: bumpVersion(featureFlags),
@@ -252,14 +264,16 @@ export async function createChangeRequest(
 /** Development and staging: an administrator applies the change immediately. */
 export async function applyDirectChange(
   actor: Actor,
-  input: RolloutChangeInput,
+  input: DirectChangeInput,
 ): Promise<FlagsActionResult> {
   return withBusinessTransaction(async ({ tx, audit }) => {
     const flag = await lockFlag(tx, input.flagId);
     assertCanApplyDirectly(actor, flag);
     assertFreshVersion("feature_flag", flag, input.flagVersion);
     assertNoOpenRequest(flag, await openRequestFor(tx, flag.id));
-    assertIsAChange(flag, input);
+    const targeting = parseTargeting(flag.targeting);
+    const regionsChanged = !sameRegions(regionsFromTargeting(targeting), input.regions);
+    assertIsAChange(flag, input, regionsChanged);
 
     const reference = await nextReference(tx);
     const now = new Date();
@@ -287,6 +301,7 @@ export async function applyDirectChange(
         enabled: input.enabled,
         rolloutPercentage: input.rolloutPercentage,
         killedAt: input.enabled ? null : flag.killedAt,
+        targeting: withRegions(targeting, input.regions),
       },
       actor,
     );

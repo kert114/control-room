@@ -9,7 +9,7 @@ import { StatusBadge } from "@/platform/ui/status-badge";
 
 import type { ChangeRequestDetail, ChangeRequestSummary, FlagDetail } from "@/modules/flags/queries";
 import { ENVIRONMENT_LABEL, requiresChangeRequest } from "@/modules/flags/rules";
-import { describeTargetingRule } from "@/modules/flags/targeting";
+import { describeTargetingRule, regionsFromTargeting } from "@/modules/flags/targeting";
 import { isOpen, STATUS_LABEL } from "@/modules/flags/transitions";
 import { buildFlagsHref, type FlagsQuery } from "@/modules/flags/url-state";
 import { BeforeAfter } from "@/modules/flags/ui/before-after";
@@ -131,6 +131,7 @@ export function FlagDetailPanel({
                     enabled: flag.enabled,
                     rolloutPercentage: flag.rolloutPercentage,
                     killed: flag.killedAt !== null,
+                    regions: regionsFromTargeting(flag.targeting),
                   }}
                 />
               ) : null}
@@ -145,6 +146,7 @@ export function FlagDetailPanel({
                     enabled: flag.enabled,
                     rolloutPercentage: flag.rolloutPercentage,
                     killed: flag.killedAt !== null,
+                    regions: regionsFromTargeting(flag.targeting),
                   }}
                 />
               ) : null}

@@ -6,6 +6,7 @@ import { Button } from "@/platform/ui/button";
 
 import { submitChangeRequest, submitDirectChange } from "@/modules/flags/form-actions";
 import { IDLE } from "@/modules/flags/form-state";
+import { REGIONS, type RegionCode } from "@/modules/flags/targeting";
 import { BeforeAfter } from "@/modules/flags/ui/before-after";
 import { FieldError, FormFeedback, inputClass, textareaClass } from "@/modules/flags/ui/form-feedback";
 
@@ -16,6 +17,8 @@ export interface RolloutFormFlag {
   enabled: boolean;
   rolloutPercentage: number;
   killed: boolean;
+  /** Countries the rollout is currently restricted to; empty means everywhere. */
+  regions: RegionCode[];
 }
 
 export function RolloutForm({
@@ -36,6 +39,7 @@ export function RolloutForm({
   const [rollout, setRollout] = React.useState(String(flag.rolloutPercentage));
   const [reason, setReason] = React.useState("");
   const [ticket, setTicket] = React.useState("");
+  const [regions, setRegions] = React.useState<RegionCode[]>(flag.regions);
   const errors = state.status === "invalid" ? state.fieldErrors : {};
   const id = React.useId();
 
@@ -98,6 +102,45 @@ export function RolloutForm({
         />
         <FieldError id={`${id}-rollout-error`} message={errors.rolloutPercentage} />
       </div>
+
+      {mode === "direct" ? (
+        <fieldset className="flex flex-col gap-1">
+          <legend className="text-meta font-medium text-muted">
+            Regions <span className="font-normal">(none selected = every region)</span>
+          </legend>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 md:grid-cols-4">
+            {REGIONS.map((region) => {
+              const selected = regions.includes(region.code);
+              return (
+                <label
+                  key={region.code}
+                  className="inline-flex min-h-9 items-center gap-2 text-body text-ink"
+                >
+                  <input
+                    type="checkbox"
+                    name="regions"
+                    value={region.code}
+                    checked={selected}
+                    ref={(element) => {
+                      if (element) element.defaultChecked = selected;
+                    }}
+                    onChange={(event) =>
+                      setRegions((current) =>
+                        event.target.checked
+                          ? [...current, region.code]
+                          : current.filter((code) => code !== region.code),
+                      )
+                    }
+                    className="h-4 w-4 accent-primary"
+                  />
+                  {region.label} ({region.code})
+                </label>
+              );
+            })}
+          </div>
+          <FieldError id={`${id}-regions-error`} message={errors.regions} />
+        </fieldset>
+      ) : null}
 
       {preview ? (
         <BeforeAfter

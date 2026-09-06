@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { regionCodesSchema } from "@/modules/flags/targeting";
+
 const flagRef = {
   flagId: z.string().uuid(),
   flagVersion: z.coerce.number().int().positive(),
@@ -50,6 +52,17 @@ export const rolloutChangeSchema = z.object({
 });
 
 export type RolloutChangeInput = z.infer<typeof rolloutChangeSchema>;
+
+/** Checkbox groups arrive as a string, a list, or nothing at all. */
+const regions = z.preprocess(
+  (value) => (value === undefined ? [] : Array.isArray(value) ? value : [value]),
+  regionCodesSchema,
+);
+
+/** Development and staging edits can also restrict the rollout to regions. */
+export const directChangeSchema = rolloutChangeSchema.extend({ regions });
+
+export type DirectChangeInput = z.infer<typeof directChangeSchema>;
 
 export const killSwitchSchema = z.object({
   ...flagRef,

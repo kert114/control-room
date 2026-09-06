@@ -22,6 +22,7 @@ import type { FormState } from "@/modules/flags/form-state";
 import {
   cancelSchema,
   decisionSchema,
+  directChangeSchema,
   fieldErrors,
   killSwitchSchema,
   rolloutChangeSchema,
@@ -44,6 +45,23 @@ function successHref(formData: FormData, outcome: ActionOutcome): string {
   return buildFlagsHref(query, { ...selected, notice: outcome.notice, ref: outcome.reference });
 }
 
+/** Repeated fields (checkbox groups) become arrays; everything else stays a string. */
+function formValues(formData: FormData): Record<string, string | string[]> {
+  const values: Record<string, string | string[]> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value !== "string") continue;
+    const current = values[key];
+    if (current === undefined) {
+      values[key] = value;
+    } else if (Array.isArray(current)) {
+      current.push(value);
+    } else {
+      values[key] = [current, value];
+    }
+  }
+  return values;
+}
+
 async function run<TSchema extends z.ZodTypeAny>(
   permission: Permission,
   schema: TSchema,
@@ -59,7 +77,7 @@ async function run<TSchema extends z.ZodTypeAny>(
     }
     throw error;
   }
-  const parsed = schema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = schema.safeParse(formValues(formData));
   if (!parsed.success) {
     return { status: "invalid", fieldErrors: fieldErrors(parsed.error) };
   }
@@ -82,7 +100,7 @@ export async function submitDirectChange(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  return run("flags.edit_nonproduction", rolloutChangeSchema, formData, applyDirectChange);
+  return run("flags.edit_nonproduction", directChangeSchema, formData, applyDirectChange);
 }
 
 export async function submitKillSwitch(

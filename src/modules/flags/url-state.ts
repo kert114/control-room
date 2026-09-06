@@ -18,6 +18,7 @@ export type SortKey = (typeof SORT_KEYS)[number];
 
 const searchParamsSchema = z.object({
   q: z.string().trim().max(80).optional(),
+  key: z.string().trim().max(80).optional(),
   env: z.enum(["development", "staging", "production"]).optional(),
   owner: z.string().trim().max(80).optional(),
   sort: z.enum(SORT_KEYS).default("key"),
@@ -31,6 +32,8 @@ const searchParamsSchema = z.object({
 
 export interface FlagsQuery {
   q?: string;
+  /** Exact flag key chosen from the picker; `q` remains the free-text search. */
+  key?: string;
   env?: FlagEnvironment;
   owner?: string;
   sort: SortKey;
@@ -80,7 +83,7 @@ export function buildFlagsHref(
     ...overrides,
   };
   const params = new URLSearchParams();
-  for (const key of ["q", "env", "owner", "sort", "dir", "flag", "request", "action", "notice", "ref"]) {
+  for (const key of ["q", "key", "env", "owner", "sort", "dir", "flag", "request", "action", "notice", "ref"]) {
     const value = merged[key];
     if (value === undefined || value === "") {
       continue;

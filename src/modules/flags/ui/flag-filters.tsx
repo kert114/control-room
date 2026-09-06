@@ -12,19 +12,21 @@ const control =
 /** Plain GET form so every filter lives in the URL and survives reload. */
 export function FlagFilters({
   query,
+  flagKeys,
   owners,
 }: {
   query: FlagsQuery;
+  flagKeys: readonly string[];
   owners: readonly string[];
 }): React.ReactElement {
-  const active = Boolean(query.q || query.env || query.owner);
+  const active = Boolean(query.q || query.key || query.env || query.owner);
   return (
     <form
       method="get"
       action="/flags"
       role="search"
       aria-label="Filter flags"
-      className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end"
+      className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end"
     >
       <div className="flex flex-col gap-1">
         <label htmlFor="flags-q" className="text-meta font-medium text-muted">
@@ -38,6 +40,19 @@ export function FlagFilters({
           placeholder="Key or description"
           className={control}
         />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="flags-key" className="text-meta font-medium text-muted">
+          Flag
+        </label>
+        <select id="flags-key" name="key" defaultValue={query.key ?? ""} className={control}>
+          <option value="">All flags</option>
+          {flagKeys.map((key) => (
+            <option key={key} value={key}>
+              {key}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="flags-env" className="text-meta font-medium text-muted">
@@ -74,7 +89,7 @@ export function FlagFilters({
         </Button>
         {active ? (
           <Button asChild variant="ghost">
-            <Link prefetch={false} href={buildFlagsHref(query, { q: undefined, env: undefined, owner: undefined })}>
+            <Link prefetch={false} href={buildFlagsHref(query, { q: undefined, key: undefined, env: undefined, owner: undefined })}>
               Clear filters
             </Link>
           </Button>

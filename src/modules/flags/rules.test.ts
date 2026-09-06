@@ -16,8 +16,10 @@ import {
   flagMetadata,
   requiresChangeRequest,
 } from "@/modules/flags/rules";
-import { killSwitchSchema, rolloutChangeSchema } from "@/modules/flags/schemas";
-import { parseTargeting } from "@/modules/flags/targeting";
+import { collectServiceHealth, worstStatus, type ServiceHealthProvider } from "@/modules/flags/health/provider";
+import { SERVICE_HEALTH_PROVIDERS } from "@/modules/flags/health/registry";
+import { directChangeSchema, killSwitchSchema, rolloutChangeSchema } from "@/modules/flags/schemas";
+import { parseTargeting, regionsFromTargeting, sameRegions, withRegions } from "@/modules/flags/targeting";
 import { assertTransition, canTransition, isOpen } from "@/modules/flags/transitions";
 import { buildFlagsHref, parseFlagsQuery } from "@/modules/flags/url-state";
 
@@ -197,10 +199,84 @@ describe("targeting schema", () => {
   });
 });
 
+describe("region targeting", () => {
+  const base = parseTargeting([{ attribute: "plan", operator: "equals", values: ["pro"] }]);
+
+  it("adds, replaces, and removes the country rule without touching other rules", () => {
+    const restricted = withRegions(base, ["FI", "EE"]);
+    expect(restricted).toEqual([...base, { attribute: "country", operator: "in", values: ["EE", "FI"] }]);
+    expect(regionsFromTargeting(restricted)).toEqual(["EE", "FI"]);
+    expect(withRegions(restricted, ["DE"])).toEqual([...base, { attribute: "country", operator: "in", values: ["DE"] }]);
+    expect(withRegions(restricted, [])).toEqual(base);
+    expect(regionsFromTargeting(base)).toEqual([]);
+    expect(sameRegions(["EE", "FI"], ["FI", "EE"])).toBe(true);
+    expect(sameRegions(["EE"], ["FI", "EE"])).toBe(false);
+  });
+
+  it("accepts a single, several, or no regions from the form and rejects unknown codes", () => {
+    const input = {
+      flagId: "0b7b0d2e-3c2f-4b7c-9c4e-1f4b2d9e8a10",
+      flagVersion: "1",
+      enabled: "on",
+      rolloutPercentage: "50",
+      reason: "Synthetic reason for the test run.",
+      ticket: "",
+    };
+    expect(directChangeSchema.parse(input).regions).toEqual([]);
+    expect(directChangeSchema.parse({ ...input, regions: "EE" }).regions).toEqual(["EE"]);
+    expect(directChangeSchema.parse({ ...input, regions: ["EE", "FI"] }).regions).toEqual(["EE", "FI"]);
+    expect(directChangeSchema.safeParse({ ...input, regions: "XX" }).success).toBe(false);
+  });
+});
+
+describe("service health providers", () => {
+  it("normalises every mock provider into the shared signal shape", async () => {
+    const snapshot = await collectServiceHealth(SERVICE_HEALTH_PROVIDERS);
+    expect(snapshot.reports.map((report) => report.providerId)).toEqual([
+      "datadog",
+      "grafana",
+      "sentry",
+      "internal-status",
+    ]);
+    for (const report of snapshot.reports) {
+      expect(report.status).toBe("ok");
+      expect(report.signals.length).toBeGreaterThan(0);
+      for (const signal of report.signals) {
+        expect(["healthy", "degraded", "down", "unknown"]).toContain(signal.status);
+        expect(signal.service).not.toBe("");
+        expect(signal.owner).not.toBe("");
+      }
+    }
+    expect(snapshot.overall).toBe("degraded");
+  });
+
+  it("isolates a failing provider and reports the worst status", async () => {
+    const broken: ServiceHealthProvider = {
+      id: "broken",
+      name: "Broken",
+      fetchSignals: () => Promise.reject(new Error("timeout")),
+    };
+    const healthy: ServiceHealthProvider = {
+      id: "ok",
+      name: "OK",
+      fetchSignals: async () => [
+        { service: "svc", status: "healthy", detail: "fine", owner: "Team", observedAt: new Date(0) },
+      ],
+    };
+    const snapshot = await collectServiceHealth([broken, healthy]);
+    expect(snapshot.reports[0]).toMatchObject({ providerId: "broken", status: "unavailable", signals: [] });
+    expect(snapshot.reports[1]).toMatchObject({ providerId: "ok", status: "ok" });
+    expect(snapshot.overall).toBe("unknown");
+    expect(worstStatus(["healthy", "down", "degraded"])).toBe("down");
+    expect(worstStatus([])).toBe("healthy");
+  });
+});
+
 describe("URL state", () => {
   it("keeps valid filters and drops malformed values individually", () => {
     const query = parseFlagsQuery({
       q: "kyc",
+      key: "kyc-auto-triage",
       env: "production",
       owner: "Risk platform",
       sort: "nonsense",
@@ -208,7 +284,13 @@ describe("URL state", () => {
       flag: "not-a-uuid",
       request: "0b7b0d2e-3c2f-4b7c-9c4e-1f4b2d9e8a10",
     });
-    expect(query).toMatchObject({ q: "kyc", env: "production", owner: "Risk platform", dir: "desc" });
+    expect(query).toMatchObject({
+      q: "kyc",
+      key: "kyc-auto-triage",
+      env: "production",
+      owner: "Risk platform",
+      dir: "desc",
+    });
     expect(query.sort).toBe("key");
     expect(query.flag).toBeUndefined();
     expect(query.request).toBe("0b7b0d2e-3c2f-4b7c-9c4e-1f4b2d9e8a10");
