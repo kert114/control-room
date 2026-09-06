@@ -103,7 +103,7 @@ export function QueueTable({
                       : undefined
                   }
                   className={cn(
-                    "h-9 px-1.5 md:px-3 text-left align-middle text-meta font-medium uppercase tracking-wide text-muted",
+                    "h-9 px-2 md:px-3 text-left align-middle text-meta font-medium uppercase tracking-wide text-muted",
                     column.align === "right" && "text-right",
                     !column.narrow && (column.wide ? "hidden 2xl:table-cell" : "hidden md:table-cell"),
                   )}
@@ -155,7 +155,7 @@ export function QueueTable({
                   selected && "bg-selection font-medium",
                 )}
               >
-                <td className="min-h-12 px-1.5 md:px-3 py-2 align-middle md:min-h-10">
+                <td className="min-h-12 px-2 md:px-3 py-2 align-middle md:min-h-10">
                   <span className="flex flex-col">
                     <span className="md:whitespace-nowrap">
                       <Link prefetch={false}
@@ -188,14 +188,14 @@ export function QueueTable({
                     {countryName(row.customerCountry)}
                   </span>
                 </td>
-                <td className="px-1.5 md:px-3 py-2 align-middle">
+                <td className="px-2 md:px-3 py-2 align-middle">
                   <StatusBadge
                     tone={RISK_TONE[row.riskLevel]}
                     label={`${RISK_LABELS[row.riskLevel]} ${row.riskScore}`}
                     className="md:whitespace-nowrap"
                   />
                 </td>
-                <td className="px-1.5 md:px-3 py-2 align-middle">
+                <td className="px-2 md:px-3 py-2 align-middle">
                   <span className="flex flex-col items-start gap-1">
                     <StatusBadge
                       tone={STATUS_TONE[row.status]}
@@ -222,7 +222,7 @@ export function QueueTable({
                 <td className="hidden whitespace-nowrap px-3 py-2 text-right align-middle 2xl:table-cell">
                   {formatDate(row.openedAt)}
                 </td>
-                <td className="px-1.5 md:px-3 py-2 text-right align-middle">
+                <td className="px-2 md:px-3 py-2 text-right align-middle">
                   <StatusBadge
                     tone={sla.tone}
                     label={sla.label}
