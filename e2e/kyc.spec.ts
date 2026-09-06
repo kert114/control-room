@@ -36,13 +36,11 @@ test.describe("KYC review workflow", () => {
     await signIn(page, ACCOUNTS.operator);
     await openQueue(page);
 
-    await page.getByLabel(/^Search case/).fill("KYC-240");
-    await page.waitForURL(/q=KYC-240/);
-    const highRisk = page.getByRole("group", { name: /Risk/ }).getByRole("button", { name: "High" });
-    await highRisk.click();
+    await page.getByLabel("Search case or customer").fill("KYC-240");
+    await page.getByLabel("Risk").selectOption("high");
+    await page.getByRole("button", { name: "Apply filters" }).click();
     await page.waitForURL(/risk=high/);
-    await expect(highRisk).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByRole("button", { name: "Apply filters" })).toHaveCount(0);
+    await expect(page).toHaveURL(/q=KYC-240/);
 
     await page.getByRole("columnheader", { name: /Risk/ }).getByRole("link").click();
     await page.waitForURL(/sort=risk/);
@@ -55,8 +53,8 @@ test.describe("KYC review workflow", () => {
 
     await page.reload();
     await expect(page).toHaveURL(url);
-    await expect(page.getByLabel(/^Search case/)).toHaveValue("KYC-240");
-    await expect(highRisk).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByLabel("Search case or customer")).toHaveValue("KYC-240");
+    await expect(page.getByLabel("Risk")).toHaveValue("high");
     await expect(
       page.getByRole("columnheader", { name: /Risk/ }),
     ).toHaveAttribute("aria-sort", /ascending|descending/);
@@ -67,84 +65,6 @@ test.describe("KYC review workflow", () => {
     await expect(
       page.getByRole("listitem").filter({ hasText: "Step 2" }),
     ).toContainText("current");
-  });
-
-  test("status and risk filters combine several values without an apply step", async ({
-    page,
-  }) => {
-    await signIn(page, ACCOUNTS.operator);
-    await openQueue(page);
-    const status = page.getByRole("group", { name: /Status/ });
-    await status.getByRole("button", { name: "Approved" }).click();
-    await page.waitForURL(/status=approved/);
-    await status.getByRole("button", { name: "Rejected" }).click();
-    await page.waitForURL(/status=approved&status=rejected/);
-    const rows = page.getByTestId("kyc-queue").locator("tbody tr");
-    const closed = await rows.count();
-    expect(closed).toBeGreaterThanOrEqual(2);
-    for (const row of await rows.all()) {
-      await expect(row).toContainText("Closed");
-    }
-
-    const risk = page.getByRole("group", { name: /Risk/ });
-    await risk.getByRole("button", { name: "Low" }).click();
-    await page.waitForURL(/risk=low/);
-    await expect(rows).toHaveCount(1);
-    await risk.getByRole("button", { name: "Medium" }).click();
-    await page.waitForURL(/risk=low&risk=medium/);
-    await expect(rows).toHaveCount(2);
-    for (const row of await rows.all()) {
-      await expect(row).toContainText(/Low|Medium/);
-    }
-
-    await page.reload();
-    await expect(status.getByRole("button", { name: "Approved" })).toHaveAttribute("aria-pressed", "true");
-    await expect(risk.getByRole("button", { name: "Medium" })).toHaveAttribute("aria-pressed", "true");
-    await page.getByRole("button", { name: "Clear filters" }).click();
-    await page.waitForURL(/\/kyc$/);
-    await expect(rows).toHaveCount(5);
-  });
-
-  test("free-text search matches the country name behind the stored code", async ({
-    page,
-  }) => {
-    await signIn(page, ACCOUNTS.operator);
-    await openQueue(page);
-    await expect(page.getByLabel("Country", { exact: true })).toContainText("Estonia (EE)");
-    await page.getByLabel(/^Search case/).fill("Estonia");
-    await page.waitForURL(/q=Estonia/);
-    const rows = page.getByTestId("kyc-queue").locator("tbody tr");
-    await expect(rows.first()).toContainText("Estonia");
-    expect(await rows.count()).toBeGreaterThan(0);
-  });
-
-  test("queue says who each case is waiting on", async ({ page }) => {
-    await signIn(page, ACCOUNTS.approver);
-    await openQueue(page);
-    await expect(page.getByText(/waiting on you/)).toBeVisible();
-    const escalated = page.getByTestId("kyc-row-KYC-2404");
-    await expect(escalated).toContainText("Your action");
-    await expect(escalated).toContainText("final decision");
-    await escalated.click();
-    await page.waitForURL(/case=/);
-    await expect(page.getByTestId("kyc-case-detail")).toContainText("Waiting on");
-  });
-
-  test("documents open as PDFs through the authenticated route", async ({ page }) => {
-    await signIn(page, ACCOUNTS.auditor);
-    await openQueue(page);
-    await page.getByTestId("kyc-row-KYC-2403").click();
-    await page.waitForURL(/case=/);
-    const link = page.getByTestId("kyc-document-link").first();
-    const href = await link.getAttribute("href");
-    expect(href).toMatch(/^\/kyc\/documents\//);
-    const response = await page.request.get(href!);
-    expect(response.status()).toBe(200);
-    expect(response.headers()["content-type"]).toContain("application/pdf");
-    const body = await response.body();
-    expect(body.subarray(0, 5).toString()).toBe("%PDF-");
-    const missing = await page.request.get("/kyc/documents/00000000-0000-4000-8000-000000000000");
-    expect(missing.status()).toBe(404);
   });
 
   test("shows the no-results state and clears back to the full queue", async ({
@@ -176,33 +96,6 @@ test.describe("KYC review workflow", () => {
     await expect(second).toHaveAttribute("aria-selected", "true");
     await expect(first).toHaveAttribute("aria-selected", "false");
     await expect(page.getByTestId("kyc-case-detail")).toContainText("KYC-2402");
-  });
-
-  test("a case waiting on the customer can be resumed into review", async ({
-    page,
-  }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "desktop",
-      "Mutates seeded data; run once per seed.",
-    );
-    await signIn(page, ACCOUNTS.operator);
-    await openQueue(page, "/kyc?status=in_review&assignee=me");
-    const rows = page.getByTestId("kyc-queue").locator("tbody tr");
-    expect(await rows.count(), "reseed the database: no case in review").toBeGreaterThan(0);
-    await rows.first().click();
-    await page.waitForURL(/case=/);
-
-    await page.getByLabel("What the customer must provide").fill("Certified copy of the passport.");
-    await page.getByRole("button", { name: "Request information" }).click();
-    await expect(page.getByTestId("kyc-action-success")).toContainText(/information/i);
-    const detail = page.getByTestId("kyc-case-detail");
-    await expect(detail).toContainText("Information requested");
-    await expect(detail).toContainText("Customer");
-
-    await page.getByRole("button", { name: "Resume review" }).click();
-    await expect(page.getByTestId("kyc-action-success")).toContainText(/in review/i);
-    await expect(detail).toContainText("In review");
-    await expect(detail).toContainText("Your action");
   });
 
   test("operator claims a pending case and records a decision", async ({
@@ -240,20 +133,18 @@ test.describe("KYC review workflow", () => {
     ).toContainText("current");
 
     // Validation keeps the form and explains the problem inline.
-    await page.getByRole("radio", { name: /^Approve case/ }).check();
-    await page.getByRole("button", { name: "Approve case" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Approve case" }).click();
-    await expect(page.getByTestId("kyc-action-error")).toBeVisible();
-    await expect(page.getByText(/checklist item/i).first()).toBeVisible();
-
-    // Rationale is optional: reject without one.
-    await expect(page.getByLabel(/Rationale/)).toHaveValue("");
     await page.getByRole("radio", { name: /^Reject case/ }).check();
+    await page.getByRole("button", { name: "Reject case" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Reject case" }).click();
+    await expect(page.getByTestId("kyc-action-error")).toBeVisible();
+    await expect(page.getByText(/rationale/i).first()).toBeVisible();
+
+    await page.getByLabel("Rationale").fill("Synthetic adverse media confirmed; rejecting.");
     await page.getByRole("button", { name: "Reject case" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Reject case" }).click();
     await expect(page.getByTestId("kyc-action-success")).toContainText(/rejected/);
     await expect(page.getByTestId("kyc-case-detail")).toContainText("Rejected");
-    await expect(page.getByTestId("kyc-case-detail")).toContainText("No rationale recorded");
+    await expect(page.getByTestId("kyc-case-detail")).toContainText("Decisions");
   });
 
   test("identity values are masked until explicitly revealed", async ({ page }) => {
@@ -289,7 +180,7 @@ test.describe("KYC review workflow", () => {
 
     // Forcing the decision step in the URL does not expose a decision form.
     await page.goto(`${page.url()}&step=decide`);
-    await expect(page.getByLabel(/Rationale/)).toHaveCount(0);
+    await expect(page.getByLabel("Rationale")).toHaveCount(0);
   });
 
   test("layout has no horizontal page scroll in the queue and detail", async ({

@@ -34,18 +34,6 @@ const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
     .optional()
     .catch(undefined);
 
-/** Repeated query values (`?status=a&status=b`) become a de-duplicated list. */
-const enumList = <T extends readonly [string, ...string[]]>(values: T) =>
-  z
-    .union([z.string(), z.array(z.string())])
-    .optional()
-    .transform((value) => {
-      const raw = value === undefined ? [] : Array.isArray(value) ? value : [value];
-      const allowed = new Set<string>(values);
-      return [...new Set(raw.filter((item) => allowed.has(item)))] as T[number][];
-    })
-    .catch([]);
-
 const optionalText = (max: number) =>
   z
     .string()
@@ -61,8 +49,8 @@ const optionalText = (max: number) =>
  */
 export const queueParamsSchema = z.object({
   q: optionalText(80),
-  risk: enumList(RISK_LEVELS),
-  status: enumList(STATUS_FILTERS),
+  risk: optionalEnum(RISK_LEVELS),
+  status: optionalEnum(STATUS_FILTERS),
   country: z
     .string()
     .trim()
@@ -83,13 +71,11 @@ export type QueueParams = z.infer<typeof queueParamsSchema>;
 
 export type RawSearchParams = Record<string, string | string[] | undefined>;
 
-const LIST_KEYS: ReadonlySet<string> = new Set(["risk", "status"]);
-
 export function parseQueueParams(raw: RawSearchParams): QueueParams {
   const flat = Object.fromEntries(
     Object.entries(raw).map(([key, value]) => [
       key,
-      Array.isArray(value) && !LIST_KEYS.has(key) ? value[0] : value,
+      Array.isArray(value) ? value[0] : value,
     ]),
   );
   return queueParamsSchema.parse(flat);
@@ -159,12 +145,7 @@ export const decideInputSchema = z
     decision: z.enum(DECISIONS, {
       errorMap: () => ({ message: "Choose approve, escalate, or reject." }),
     }),
-    rationale: z
-      .string()
-      .trim()
-      .max(1000, "A rationale must be 1000 characters or fewer.")
-      .optional()
-      .transform((value) => value ?? ""),
+    rationale: requiredText("A rationale", 1000),
     checklist: checklistSchema,
   })
   .superRefine((input, context) => {

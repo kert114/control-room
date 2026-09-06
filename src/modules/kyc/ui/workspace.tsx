@@ -11,14 +11,8 @@ import {
 import { caseCapabilities } from "@/modules/kyc/rules";
 import type { QueueParams } from "@/modules/kyc/schemas";
 import { CaseDetail } from "@/modules/kyc/ui/case-detail";
-import {
-  CLEARED_FILTERS,
-  KYC_ROUTE,
-  describeNextStep,
-  hasActiveFilters,
-  queueHref,
-} from "@/modules/kyc/ui/presentation";
-import { QueueFilters } from "@/modules/kyc/ui/queue-filters";
+import { KYC_ROUTE, queueHref } from "@/modules/kyc/ui/presentation";
+import { QueueFilters, hasActiveFilters } from "@/modules/kyc/ui/queue-filters";
 import { QueueTable } from "@/modules/kyc/ui/queue-table";
 import { WorkflowSteps, currentStep } from "@/modules/kyc/ui/workflow-steps";
 import type { Actor } from "@/platform/auth/session";
@@ -52,13 +46,6 @@ export async function KycWorkspace({
   const step = currentStep(params, canDecide);
   const deciding = step === 2;
   const filtered = hasActiveFilters(params);
-  const mine = rows.filter((row) => describeNextStep(row, actor).mine).length;
-  const queueSummary = [
-    `${rows.length} ${rows.length === 1 ? "case" : "cases"}${filtered ? " match the current filters" : ""}`,
-    actor.role === "auditor"
-      ? "read-only view"
-      : `${mine} waiting on you`,
-  ].join(" · ");
 
   return (
     <div className="flex flex-col gap-4">
@@ -85,7 +72,7 @@ export async function KycWorkspace({
         <Panel
           className="min-w-0"
           title="Queue"
-          description={`${queueSummary}.`}
+          description={`${rows.length} ${rows.length === 1 ? "case" : "cases"}${filtered ? " match the current filters" : ""}.`}
         >
           <div className="flex flex-col gap-3">
             <QueueFilters params={params} reviewers={reviewers} countries={countries} />
@@ -96,7 +83,14 @@ export async function KycWorkspace({
                   description="Widen the search or clear the filters to see the full queue."
                   action={
                     <Link prefetch={false}
-                      href={params.case ? queueHref(params, CLEARED_FILTERS) : KYC_ROUTE}
+                      href={params.case ? queueHref(params, {
+                        q: undefined,
+                        risk: undefined,
+                        status: undefined,
+                        country: undefined,
+                        assignee: undefined,
+                        sla: undefined,
+                      }) : KYC_ROUTE}
                       className="inline-flex h-11 items-center rounded-control border border-line bg-panel px-3 text-body text-ink hover:bg-primary-soft md:h-9"
                     >
                       Clear filters
@@ -110,7 +104,7 @@ export async function KycWorkspace({
                 />
               )
             ) : (
-              <QueueTable rows={rows} params={params} actor={actor} now={now} />
+              <QueueTable rows={rows} params={params} now={now} />
             )}
           </div>
         </Panel>
