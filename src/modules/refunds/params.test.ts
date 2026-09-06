@@ -2,22 +2,38 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildRefundsHref,
+  effectiveStatuses,
+  hasQueueFilters,
   parseListParams,
   rejectInputSchema,
 } from "@/modules/refunds/params";
 
 describe("refund URL state", () => {
-  it("parses defaults and invalid values safely", () => {
+  it("defaults to the open queue, oldest first, monthly volume", () => {
     expect(parseListParams({})).toEqual({
       q: "",
-      status: "open",
+      status: [],
       sort: "createdAt",
-      dir: "desc",
+      dir: "asc",
+      range: "month",
       step: 1,
     });
+    expect(effectiveStatuses([])).toEqual(["pending_approval", "escalated"]);
     expect(
-      parseListParams({ status: "bad", sort: "bad", dir: "bad", step: "99" }),
-    ).toMatchObject({ status: "open", sort: "createdAt", dir: "desc", step: 1 });
+      parseListParams({ status: "bad", sort: "bad", dir: "bad", range: "bad", step: "99" }),
+    ).toMatchObject({ status: [], sort: "createdAt", dir: "asc", range: "month", step: 1 });
+  });
+
+  it("accepts several statuses as a comma list or repeated params", () => {
+    expect(parseListParams({ status: "approved,rejected,draft" }).status).toEqual([
+      "approved",
+      "rejected",
+    ]);
+    expect(parseListParams({ status: ["approved", "escalated"] }).status).toEqual([
+      "escalated",
+      "approved",
+    ]);
+    expect(parseListParams({ status: "all" }).status).toHaveLength(5);
   });
 
   it("parses money filters to minor units", () => {
@@ -29,27 +45,36 @@ describe("refund URL state", () => {
   it("round-trips canonical links while omitting defaults", () => {
     const href = buildRefundsHref({
       q: " RFD-50 ",
-      status: "all",
+      status: ["approved", "rejected"],
       min: 1250,
       sort: "amount",
-      dir: "asc",
+      dir: "desc",
+      range: "year",
       refund: "00000000-0000-4000-8000-000000000001",
       step: 3,
       decision: "reject",
     });
     expect(href).toBe(
-      "/refunds?q=RFD-50&status=all&min=12.50&sort=amount&dir=asc&refund=00000000-0000-4000-8000-000000000001&step=3&decision=reject",
+      "/refunds?q=RFD-50&status=approved%2Crejected&min=12.50&sort=amount&dir=desc&range=year&refund=00000000-0000-4000-8000-000000000001&step=3&decision=reject",
     );
     expect(parseListParams(Object.fromEntries(new URL(href, "http://localhost").searchParams)))
       .toMatchObject({
         q: "RFD-50",
-        status: "all",
+        status: ["approved", "rejected"],
         min: 1250,
         sort: "amount",
-        dir: "asc",
+        dir: "desc",
+        range: "year",
         step: 3,
         decision: "reject",
       });
+    expect(buildRefundsHref({ status: [], dir: "asc", range: "month" })).toBe("/refunds");
+  });
+
+  it("treats only search, status and amount as queue filters", () => {
+    expect(hasQueueFilters(parseListParams({ range: "week", sort: "amount" }))).toBe(false);
+    expect(hasQueueFilters(parseListParams({ status: "approved" }))).toBe(true);
+    expect(hasQueueFilters(parseListParams({ q: "x" }))).toBe(true);
   });
 
   it("validates rejection notes", () => {

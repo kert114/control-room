@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/platform/auth/session";
 import { AuthorizationError } from "@/platform/authz/errors";
 
-import { REFUNDS_COMPARE_PATH, REFUNDS_PATH } from "@/modules/refunds/params";
+import { REFUNDS_PATH } from "@/modules/refunds/params";
 import {
   approveRefund,
   escalateRefund,
@@ -48,10 +48,7 @@ export async function decideRefundAction(
         message: "Choose a decision before continuing.",
       };
     }
-    if (result.ok) {
-      revalidatePath(REFUNDS_PATH);
-      revalidatePath(REFUNDS_COMPARE_PATH);
-    }
+    if (result.ok) revalidatePath(REFUNDS_PATH);
     return result;
   } catch (error: unknown) {
     if (error instanceof AuthorizationError) {

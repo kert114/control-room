@@ -167,10 +167,15 @@ describe("describeDecisions", () => {
       refund: refund({ amountMinor: 61000 }),
       policy,
     });
-    expect(options.map((option) => option.decision)).toEqual(["approve", "reject", "escalate"]);
+    expect(options.map((option) => option.decision)).toEqual(["approve", "reject"]);
     expect(options[0]?.blockedBy).toMatch(/€500\.00/);
     expect(options[1]?.blockedBy).toBeNull();
-    expect(options[2]?.blockedBy).toMatch(/cannot escalate/);
+  });
+
+  it("omits decisions the role can never take instead of explaining them", () => {
+    const options = describeDecisions({ actor: operator, refund: refund({}), policy });
+    expect(options.map((option) => option.decision)).toEqual(["escalate"]);
+    expect(describeDecisions({ actor: auditor, refund: refund({}), policy })).toEqual([]);
   });
 
   it("marks self-escalated refunds as blocked for the escalator", () => {

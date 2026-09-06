@@ -76,21 +76,20 @@ export interface DecisionOption {
   blockedBy: string | null;
 }
 
-/** Non-throwing preview of `planDecision` so the UI can explain a block before the click. */
+/**
+ * Non-throwing preview of `planDecision` so the UI can explain a block before
+ * the click. Decisions the actor's role can never take are omitted entirely;
+ * only record-specific blocks (threshold, separation of duties) are described.
+ */
 export function describeDecisions(input: Omit<DecisionInput, "decision">): DecisionOption[] {
-  return availableDecisions(input.refund.status).map((decision) => {
+  return availableDecisions(input.refund.status).flatMap((decision): DecisionOption[] => {
+    if (!can(input.actor.role, permissionForDecision(decision))) return [];
     try {
       planDecision({ ...input, decision });
-      return { decision, blockedBy: null };
+      return [{ decision, blockedBy: null }];
     } catch (error: unknown) {
       if (error instanceof SeparationOfDutiesError || error instanceof BusinessRuleError) {
-        return { decision, blockedBy: error.message };
-      }
-      if (error instanceof AuthorizationError) {
-        return {
-          decision,
-          blockedBy: `The ${input.actor.role} role cannot ${decision} refunds.`,
-        };
+        return [{ decision, blockedBy: error.message }];
       }
       throw error;
     }
