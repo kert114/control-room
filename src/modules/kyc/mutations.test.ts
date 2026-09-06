@@ -208,6 +208,20 @@ describe("resumeReview", () => {
     const result = await resumeReview(operator, { caseId: "case-1", expectedVersion: 1 });
     expect(result).toMatchObject({ ok: true, data: { status: "in_review", version: 2 } });
   });
+
+  it("lets a senior reviewer resume without taking the case from its reviewer", async () => {
+    reset({ status: "information_requested", assignedToId: operator.id });
+    const result = await resumeReview(approver, { caseId: "case-1", expectedVersion: 1 });
+    expect(result).toMatchObject({ ok: true, data: { status: "in_review" } });
+    expect(store.kycCase.assignedToId).toBe(operator.id);
+  });
+
+  it("refuses an operator resuming another reviewer's case", async () => {
+    reset({ status: "information_requested", assignedToId: approver.id });
+    const result = await resumeReview(operator, { caseId: "case-1", expectedVersion: 1 });
+    expect(result).toMatchObject({ ok: false, code: "business_rule" });
+    expect(store.audits).toHaveLength(0);
+  });
 });
 
 describe("requestInformation", () => {
@@ -227,6 +241,19 @@ describe("requestInformation", () => {
 });
 
 describe("decideCase", () => {
+  it("accepts a decision without a rationale", async () => {
+    reset({ status: "in_review", assignedToId: operator.id });
+    const result = await decideCase(operator, {
+      caseId: "case-1",
+      expectedVersion: 1,
+      decision: "reject",
+      rationale: "",
+      checklist: fullChecklist,
+    });
+    expect(result).toMatchObject({ ok: true, data: { status: "rejected" } });
+    expect(store.inserts[0]).toMatchObject({ rationale: "" });
+  });
+
   it("approves a reviewed case for an eligible reviewer", async () => {
     reset({ status: "in_review", assignedToId: operator.id });
     const result = await decideCase(operator, {

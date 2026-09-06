@@ -117,13 +117,12 @@ export function DecisionForm({
 
           <div className="flex flex-col gap-1">
             <label htmlFor="kyc-rationale" className="text-body font-medium text-ink">
-              Rationale
+              Rationale <span className="font-normal text-muted">(optional)</span>
             </label>
             <textarea
               id="kyc-rationale"
               name="rationale"
-              required
-              maxLength={2000}
+              maxLength={1000}
               aria-invalid={fieldErrors.rationale ? true : undefined}
               aria-describedby={fieldErrors.rationale ? "kyc-rationale-error" : undefined}
               className={textareaClass}

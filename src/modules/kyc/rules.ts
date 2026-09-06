@@ -52,6 +52,19 @@ export function assertClaimable(actor: Actor, snapshot: CaseSnapshot): void {
   }
 }
 
+/**
+ * Pending cases may be claimed by anyone they are not already assigned to
+ * someone else; a case waiting on the customer is resumed by its reviewer or a
+ * senior reviewer, and stays with its reviewer.
+ */
+export function assertMayTakeReview(actor: Actor, snapshot: CaseSnapshot): void {
+  if (snapshot.status === "information_requested") {
+    assertMayWorkCase(actor, snapshot);
+  } else {
+    assertClaimable(actor, snapshot);
+  }
+}
+
 /** The assigned reviewer, or a senior reviewer, may act on an open case. */
 export function assertMayWorkCase(actor: Actor, snapshot: CaseSnapshot): void {
   if (snapshot.assignedToId === actor.id || isSeniorReviewer(actor)) {
@@ -128,7 +141,7 @@ export function caseCapabilities(
     claim: evaluate(() => {
       assertPermission(actor, "kyc.claim");
       assertTransition(snapshot.status, "in_review");
-      assertClaimable(actor, snapshot);
+      assertMayTakeReview(actor, snapshot);
     }),
     requestInformation: evaluate(() => {
       assertPermission(actor, "kyc.request_info");

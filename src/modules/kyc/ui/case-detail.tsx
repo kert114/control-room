@@ -1,6 +1,7 @@
 import Link from "next/link";
 import * as React from "react";
 
+import { documentHref } from "@/modules/kyc/documents";
 import type { CaseDetail as CaseDetailData, Reviewer } from "@/modules/kyc/queries";
 import { kycModule } from "@/modules/kyc/module";
 import type { CaseCapabilities } from "@/modules/kyc/rules";
@@ -21,6 +22,8 @@ import {
   RISK_LABELS,
   RISK_TONE,
   STATUS_TONE,
+  countryName,
+  describeNextStep,
   describeSla,
   formatDateTime,
   humanise,
@@ -84,6 +87,7 @@ export function CaseDetail({
 }: CaseDetailProps): React.ReactElement {
   const sla = describeSla(detail.slaDueAt, detail.status, now);
   const closed = isTerminal(detail.status);
+  const next = describeNextStep(detail, actor);
 
   return (
     <ActionOutcomeProvider caseId={detail.id}>
@@ -93,7 +97,8 @@ export function CaseDetail({
         <div>
           <h2 className="text-section font-medium text-ink">Case {detail.reference}</h2>
           <p className="text-body text-muted">
-            {detail.customerAlias} · {detail.customerCountry} · opened{" "}
+            {detail.customerAlias} · {countryName(detail.customerCountry)} (
+            {detail.customerCountry}) · opened{" "}
             {formatDateTime(detail.openedAt)}
           </p>
         </div>
@@ -108,14 +113,28 @@ export function CaseDetail({
           />
         </Fact>
         <Fact label="SLA">
-          <span className={sla.breached ? "text-danger" : undefined}>{sla.label}</span>
-          <span className="block text-meta text-muted">{formatDateTime(detail.slaDueAt)}</span>
+          <StatusBadge
+            tone={sla.tone}
+            label={closed ? "Closed" : `Open · ${sla.label}`}
+          />
+          <span className="block text-meta text-muted">
+            {closed ? "Was due" : "Due"} {formatDateTime(detail.slaDueAt)}
+          </span>
         </Fact>
         <Fact label="Reviewer">
           {detail.assignedToName ?? "Unassigned"}
           {detail.assignedToId === actor.id ? (
             <span className="text-meta text-muted"> (you)</span>
           ) : null}
+        </Fact>
+        <Fact label="Waiting on">
+          <span className={next.mine ? "font-medium text-primary" : undefined}>
+            {next.mine ? "Your action" : next.owner}
+          </span>
+          <span className="block text-meta text-muted">
+            {next.mine && next.owner !== "You" ? `${next.owner} · ` : ""}
+            {next.action}
+          </span>
         </Fact>
         <Fact label="Opened by">{detail.createdByName}</Fact>
       </dl>
@@ -162,9 +181,18 @@ export function CaseDetail({
                     className="flex flex-wrap items-center justify-between gap-2 text-body"
                   >
                     <span>
-                      {humanise(document.documentType)}
+                      <a
+                        href={documentHref(document.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        data-testid="kyc-document-link"
+                      >
+                        {humanise(document.documentType)}
+                        <span className="sr-only"> (opens PDF in a new tab)</span>
+                      </a>
                       <span className="block text-meta text-muted">
-                        Received {formatDateTime(document.receivedAt)}
+                        PDF · received {formatDateTime(document.receivedAt)}
                       </span>
                     </span>
                     <StatusBadge
@@ -221,7 +249,9 @@ export function CaseDetail({
                     <p className="font-medium text-ink">
                       {DECISION_LABELS[decision.decision]} · {decision.decidedByName}
                     </p>
-                    <p className="text-ink">{decision.rationale}</p>
+                    <p className={decision.rationale ? "text-ink" : "text-muted"}>
+                      {decision.rationale || "No rationale recorded."}
+                    </p>
                     <p className="text-meta text-muted">
                       {formatDateTime(decision.decidedAt)}
                     </p>

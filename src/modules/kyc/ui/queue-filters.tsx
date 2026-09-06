@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import type { Reviewer } from "@/modules/kyc/queries";
@@ -7,10 +9,21 @@ import {
   SLA_FILTERS,
   STATUS_FILTERS,
   type QueueParams,
+  type RiskLevel,
+  type StatusFilter,
 } from "@/modules/kyc/schemas";
 import { STATUS_LABELS, type KycStatus } from "@/modules/kyc/transitions";
-import { KYC_ROUTE, RISK_LABELS, queueHref } from "@/modules/kyc/ui/presentation";
-import { Button } from "@/platform/ui/button";
+import {
+  RISK_LABELS,
+  CLEARED_FILTERS,
+  RISK_TONE,
+  STATUS_TONE,
+  countryName,
+  hasActiveFilters,
+  queueHref,
+} from "@/modules/kyc/ui/presentation";
+import { StatusBadge, type StatusTone } from "@/platform/ui/status-badge";
+import { cn } from "@/platform/ui/cn";
 
 const SLA_LABELS: Readonly<Record<(typeof SLA_FILTERS)[number], string>> = {
   breached: "Breached",
@@ -21,189 +34,230 @@ const SLA_LABELS: Readonly<Record<(typeof SLA_FILTERS)[number], string>> = {
 const fieldClass =
   "h-11 w-full rounded-control border border-line bg-panel px-2 text-body text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:h-9";
 
+const labelClass = "text-meta font-medium text-muted";
+
 export interface QueueFiltersProps {
   params: QueueParams;
   reviewers: readonly Reviewer[];
   countries: readonly string[];
 }
 
-export function hasActiveFilters(params: QueueParams): boolean {
-  return Boolean(
-    params.q ||
-      params.risk ||
-      params.status ||
-      params.country ||
-      params.assignee ||
-      params.sla,
+function toggle<T extends string>(list: readonly T[], value: T): T[] {
+  return list.includes(value)
+    ? list.filter((item) => item !== value)
+    : [...list, value];
+}
+
+interface ToggleChipProps {
+  label: string;
+  tone: StatusTone;
+  pressed: boolean;
+  onToggle: () => void;
+}
+
+/** Multi-select filter option; state is announced via aria-pressed and a tick. */
+function ToggleChip({ label, tone, pressed, onToggle }: ToggleChipProps) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onToggle}
+      className={cn(
+        "inline-flex min-h-11 items-center gap-1 rounded-control border px-2 text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:min-h-8",
+        pressed
+          ? "border-primary bg-primary-soft text-ink"
+          : "border-line bg-panel text-muted hover:text-ink",
+      )}
+    >
+      <span aria-hidden="true" className="w-3 text-meta">
+        {pressed ? "\u2713" : ""}
+      </span>
+      <StatusBadge tone={tone} label={label} />
+    </button>
   );
 }
 
 /**
- * Plain GET form: the URL is the single source of truth for queue state, so
- * filters survive reload, deep links, and work without client JavaScript.
+ * Filters apply as soon as they change by navigating to the new queue URL, so
+ * the URL stays the single source of truth for reloads and deep links.
  */
 export function QueueFilters({
   params,
   reviewers,
   countries,
 }: QueueFiltersProps): React.ReactElement {
-  const filterKey = [
-    params.q,
-    params.status,
-    params.risk,
-    params.country,
-    params.assignee,
-    params.sla,
-  ]
-    .map((value) => value ?? "")
-    .join("|");
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  const [search, setSearch] = React.useState(params.q ?? "");
+  const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    setSearch(params.q ?? "");
+  }, [params.q]);
+
+  const navigate = React.useCallback(
+    (overrides: Parameters<typeof queueHref>[1]) => {
+      startTransition(() => {
+        router.replace(queueHref(params, overrides), { scroll: false });
+      });
+    },
+    [params, router],
+  );
+
+  const applySearch = (value: string) => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    navigate({ q: value.trim() || undefined });
+  };
+
+  const onSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearch(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => navigate({ q: value.trim() || undefined }), 400);
+  };
+
+  const active = hasActiveFilters(params);
+
   return (
-    <form
-      key={filterKey}
-      method="get"
-      action={KYC_ROUTE}
-      className="grid grid-cols-2 gap-2 md:grid-cols-4"
+    <div
+      role="group"
       aria-label="Queue filters"
+      aria-busy={pending || undefined}
+      className="flex flex-col gap-3 rounded-control border border-line bg-page p-3"
     >
-      {params.case ? <input type="hidden" name="case" value={params.case} /> : null}
-      {params.sort !== "sla" ? (
-        <input type="hidden" name="sort" value={params.sort} />
-      ) : null}
-      {params.dir !== "asc" ? (
-        <input type="hidden" name="dir" value={params.dir} />
-      ) : null}
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="kyc-q" className={labelClass}>
+            Search case, customer, or country
+          </label>
+          <input
+            id="kyc-q"
+            name="q"
+            type="search"
+            value={search}
+            onChange={onSearchChange}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                applySearch(search);
+              }
+            }}
+            placeholder="KYC-2401, alias, or Estonia"
+            className={fieldClass}
+          />
+        </div>
 
-      <div className="col-span-2 flex flex-col gap-1">
-        <label htmlFor="kyc-q" className="text-meta font-medium text-muted">
-          Search case or customer
-        </label>
-        <input
-          id="kyc-q"
-          name="q"
-          type="search"
-          defaultValue={params.q ?? ""}
-          placeholder="KYC-2401 or alias"
-          className={fieldClass}
-        />
+        <div className="flex flex-col gap-1">
+          <label htmlFor="kyc-country" className={labelClass}>
+            Country
+          </label>
+          <select
+            id="kyc-country"
+            name="country"
+            value={params.country ?? ""}
+            onChange={(event) => navigate({ country: event.target.value || undefined })}
+            className={fieldClass}
+          >
+            <option value="">Any country</option>
+            {countries.map((code) => (
+              <option key={code} value={code}>
+                {countryName(code)} ({code})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="kyc-assignee" className={labelClass}>
+            Reviewer
+          </label>
+          <select
+            id="kyc-assignee"
+            name="assignee"
+            value={params.assignee ?? ""}
+            onChange={(event) => navigate({ assignee: event.target.value || undefined })}
+            className={fieldClass}
+          >
+            <option value="">Anyone</option>
+            <option value="me">Assigned to me</option>
+            <option value="unassigned">Unassigned</option>
+            {reviewers.map((reviewer) => (
+              <option key={reviewer.id} value={reviewer.id}>
+                {reviewer.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="kyc-sla" className={labelClass}>
+            SLA
+          </label>
+          <select
+            id="kyc-sla"
+            name="sla"
+            value={params.sla ?? ""}
+            onChange={(event) => navigate({ sla: event.target.value || undefined })}
+            className={fieldClass}
+          >
+            <option value="">Any SLA</option>
+            {SLA_FILTERS.map((sla) => (
+              <option key={sla} value={sla}>
+                {SLA_LABELS[sla]}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="kyc-status" className="text-meta font-medium text-muted">
-          Status
-        </label>
-        <select
-          id="kyc-status"
-          name="status"
-          defaultValue={params.status ?? ""}
-          className={fieldClass}
-        >
-          <option value="">All statuses</option>
-          {STATUS_FILTERS.map((status) => (
-            <option key={status} value={status}>
-              {status === "open" ? "Open cases" : STATUS_LABELS[status as KycStatus]}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-2 lg:flex-row lg:gap-6">
+        <fieldset className="flex min-w-0 flex-col gap-1">
+          <legend className={labelClass}>Status (select any)</legend>
+          <div className="flex flex-wrap gap-1">
+            {STATUS_FILTERS.map((status) => (
+              <ToggleChip
+                key={status}
+                label={status === "open" ? "All open" : STATUS_LABELS[status as KycStatus]}
+                tone={status === "open" ? "info" : STATUS_TONE[status as KycStatus]}
+                pressed={params.status.includes(status)}
+                onToggle={() =>
+                  navigate({ status: toggle<StatusFilter>(params.status, status) })
+                }
+              />
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex min-w-0 flex-col gap-1">
+          <legend className={labelClass}>Risk (select any)</legend>
+          <div className="flex flex-wrap gap-1">
+            {RISK_LEVELS.map((risk) => (
+              <ToggleChip
+                key={risk}
+                label={RISK_LABELS[risk]}
+                tone={RISK_TONE[risk]}
+                pressed={params.risk.includes(risk)}
+                onToggle={() => navigate({ risk: toggle<RiskLevel>(params.risk, risk) })}
+              />
+            ))}
+          </div>
+        </fieldset>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="kyc-risk" className="text-meta font-medium text-muted">
-          Risk
-        </label>
-        <select
-          id="kyc-risk"
-          name="risk"
-          defaultValue={params.risk ?? ""}
-          className={fieldClass}
-        >
-          <option value="">Any risk</option>
-          {RISK_LEVELS.map((risk) => (
-            <option key={risk} value={risk}>
-              {RISK_LABELS[risk]}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="kyc-country" className="text-meta font-medium text-muted">
-          Country
-        </label>
-        <select
-          id="kyc-country"
-          name="country"
-          defaultValue={params.country ?? ""}
-          className={fieldClass}
-        >
-          <option value="">Any country</option>
-          {countries.map((country) => (
-            <option key={country} value={country}>
-              {country}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="kyc-assignee" className="text-meta font-medium text-muted">
-          Reviewer
-        </label>
-        <select
-          id="kyc-assignee"
-          name="assignee"
-          defaultValue={params.assignee ?? ""}
-          className={fieldClass}
-        >
-          <option value="">Anyone</option>
-          <option value="me">Assigned to me</option>
-          <option value="unassigned">Unassigned</option>
-          {reviewers.map((reviewer) => (
-            <option key={reviewer.id} value={reviewer.id}>
-              {reviewer.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="kyc-sla" className="text-meta font-medium text-muted">
-          SLA
-        </label>
-        <select
-          id="kyc-sla"
-          name="sla"
-          defaultValue={params.sla ?? ""}
-          className={fieldClass}
-        >
-          <option value="">Any SLA</option>
-          {SLA_FILTERS.map((sla) => (
-            <option key={sla} value={sla}>
-              {SLA_LABELS[sla]}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="col-span-2 flex items-end gap-2 md:col-span-4">
-        <Button type="submit" variant="secondary" className="h-11 md:h-9">
-          Apply filters
-        </Button>
-        {hasActiveFilters(params) ? (
-          <Link prefetch={false}
-            href={queueHref(params, {
-              q: undefined,
-              risk: undefined,
-              status: undefined,
-              country: undefined,
-              assignee: undefined,
-              sla: undefined,
-            })}
-            className="inline-flex h-11 items-center rounded-control px-3 text-body text-primary underline-offset-2 hover:underline md:h-9"
+      <div className="flex min-h-5 items-center justify-between gap-2 text-meta text-muted">
+        <span role="status">
+          {pending ? "Updating queue\u2026" : active ? "Filters apply as you change them." : "Showing every case."}
+        </span>
+        {active ? (
+          <button
+            type="button"
+            onClick={() => navigate(CLEARED_FILTERS)}
+            className="inline-flex min-h-11 items-center rounded-control px-2 text-body text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:min-h-8"
           >
             Clear filters
-          </Link>
+          </button>
         ) : null}
       </div>
-    </form>
+    </div>
   );
 }

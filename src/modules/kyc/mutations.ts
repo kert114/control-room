@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 
 import {
-  assertClaimable,
+  assertMayTakeReview,
   assertMayDecide,
   assertMayWorkCase,
   assertPermission,
@@ -136,13 +136,17 @@ async function takeReview(
   assertPermission(actor, "kyc.claim");
   const locked = await lockCase(context.tx, input.caseId, input.expectedVersion);
   assertTransition(locked.status, "in_review");
-  assertClaimable(actor, locked);
+  assertMayTakeReview(actor, locked);
 
   const now = new Date();
+  const keepsReviewer =
+    locked.status === "information_requested" && locked.assignedToId !== null;
   const outcome = await updateCase(
     context.tx,
     locked,
-    { status: "in_review", assignedToId: actor.id, assignedAt: now },
+    keepsReviewer
+      ? { status: "in_review" }
+      : { status: "in_review", assignedToId: actor.id, assignedAt: now },
     now,
   );
   await context.audit({

@@ -15,7 +15,13 @@ import {
 import { alias } from "drizzle-orm/pg-core";
 
 import { assertPermission } from "@/modules/kyc/rules";
-import type { IdentityField, QueueParams, RiskLevel } from "@/modules/kyc/schemas";
+import type {
+  IdentityField,
+  QueueParams,
+  RiskLevel,
+  StatusFilter,
+} from "@/modules/kyc/schemas";
+import { countryName } from "@/modules/kyc/ui/presentation";
 import { OPEN_STATUSES, type KycStatus } from "@/modules/kyc/transitions";
 import type { Actor } from "@/platform/auth/session";
 import { db } from "@/platform/db/client";
@@ -58,26 +64,60 @@ const STATUS_RANK = sql<number>`case ${kycCases.status}
   when 'approved' then 5
   else 6 end`;
 
-function queueFilters(actor: Actor, params: QueueParams, now: Date): SQL[] {
+/** Statuses selected in the URL, with `open` expanded to every open status. */
+export function selectedStatuses(status: readonly StatusFilter[]): KycStatus[] {
+  const set = new Set<KycStatus>();
+  for (const value of status) {
+    if (value === "open") {
+      for (const open of OPEN_STATUSES) set.add(open);
+    } else {
+      set.add(value);
+    }
+  }
+  return [...set];
+}
+
+/** Country codes whose English name (or code) contains the search text. */
+export function matchingCountryCodes(
+  needle: string,
+  countries: readonly string[],
+): string[] {
+  const lower = needle.toLowerCase();
+  return countries.filter(
+    (code) =>
+      code.toLowerCase() === lower ||
+      countryName(code).toLowerCase().includes(lower),
+  );
+}
+
+function queueFilters(
+  actor: Actor,
+  params: QueueParams,
+  now: Date,
+  countries: readonly string[],
+): SQL[] {
   const filters: SQL[] = [];
 
   if (params.q) {
     const needle = `%${params.q.replace(/[%_]/g, "\\$&")}%`;
+    const countryCodes = matchingCountryCodes(params.q, countries);
     const match = or(
       ilike(kycCases.reference, needle),
       ilike(kycCases.customerAlias, needle),
+      ...(countryCodes.length > 0
+        ? [inArray(kycCases.customerCountry, countryCodes)]
+        : []),
     );
     if (match) {
       filters.push(match);
     }
   }
-  if (params.risk) {
-    filters.push(eq(kycCases.riskLevel, params.risk));
+  if (params.risk.length > 0) {
+    filters.push(inArray(kycCases.riskLevel, [...params.risk]));
   }
-  if (params.status === "open") {
-    filters.push(inArray(kycCases.status, [...OPEN_STATUSES]));
-  } else if (params.status) {
-    filters.push(eq(kycCases.status, params.status));
+  const statuses = selectedStatuses(params.status);
+  if (statuses.length > 0) {
+    filters.push(inArray(kycCases.status, statuses));
   }
   if (params.country) {
     filters.push(eq(kycCases.customerCountry, params.country));
@@ -127,7 +167,8 @@ export async function loadQueue(
   now: Date = new Date(),
 ): Promise<QueueRow[]> {
   assertPermission(actor, "kyc.read");
-  const filters = queueFilters(actor, params, now);
+  const countries = params.q ? await loadCountries(actor) : [];
+  const filters = queueFilters(actor, params, now, countries);
 
   return db
     .select({
@@ -377,7 +418,8 @@ export async function loadCountries(actor: Actor): Promise<string[]> {
   assertPermission(actor, "kyc.read");
   const rows = await db
     .selectDistinct({ country: kycCases.customerCountry })
-    .from(kycCases)
-    .orderBy(asc(kycCases.customerCountry));
-  return rows.map((row) => row.country);
+    .from(kycCases);
+  return rows
+    .map((row) => row.country)
+    .sort((a, b) => countryName(a).localeCompare(countryName(b), "en-GB"));
 }
