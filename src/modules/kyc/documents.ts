@@ -28,8 +28,17 @@ export interface DocumentRecord {
 }
 
 /**
+ * Object-store key for a document. Documents are addressed by case and
+ * document id, never by customer-supplied names, so the key carries no
+ * personal data and cannot be guessed from the case reference alone.
+ */
+export function documentObjectKey(document: Pick<DocumentRecord, "caseId" | "id">): string {
+  return `kyc/cases/${document.caseId}/documents/${document.id}.pdf`;
+}
+
+/**
  * Storage backend for document objects. Production wires this to the blob
- * store; the demo backend renders a clearly
+ * store behind the same key scheme; the demo backend renders a clearly
  * labelled synthetic PDF for each record so the flow is exercisable end to end.
  */
 export interface DocumentStore {
@@ -107,7 +116,7 @@ export const syntheticDocumentStore: DocumentStore = {
       `Customer: ${document.customerAlias}`,
       `Received: ${formatDate(document.receivedAt)}`,
       `Review status: ${document.status}`,
-      `Document ID: ${document.id}`,
+      `Object key: ${documentObjectKey(document)}`,
       "",
       ...body,
     ];
