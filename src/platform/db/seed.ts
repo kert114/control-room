@@ -12,8 +12,13 @@ import {
   auditEvents,
   changeRequests,
   featureFlags,
+  kycCaseDocuments,
+  kycCaseIdentity,
+  kycCaseNotes,
   kycCases,
+  kycCaseSignals,
   kycDecisions,
+  refundApprovalPolicy,
   refunds,
   users,
 } from "@/platform/db/schema";
@@ -39,7 +44,7 @@ async function main(): Promise<void> {
   const db = drizzle(pool);
 
   await db.execute(
-    sql`truncate table ${auditEvents}, ${approvals}, ${changeRequests}, ${featureFlags}, ${refunds}, ${kycDecisions}, ${kycCases}, ${users} restart identity cascade`,
+    sql`truncate table ${auditEvents}, ${approvals}, ${changeRequests}, ${featureFlags}, ${refundApprovalPolicy}, ${refunds}, ${kycDecisions}, ${kycCaseNotes}, ${kycCaseSignals}, ${kycCaseDocuments}, ${kycCaseIdentity}, ${kycCases}, ${users} restart identity cascade`,
   );
 
   const passwordHash = await hash(DEMO_PASSWORD, 10);
@@ -119,11 +124,105 @@ async function main(): Promise<void> {
     .values(
       caseSeeds.map((seed) => ({
         ...seed,
-        assignedToId: operator.id,
+        assignedToId: seed.status === "pending_review" ? null : operator.id,
+        assignedAt: seed.status === "pending_review" ? null : daysFromNow(-2),
         createdById: administrator.id,
       })),
     )
     .returning();
+
+  // Synthetic identity evidence. Values are fabricated and follow no real
+  // document numbering scheme.
+  await db.insert(kycCaseIdentity).values(
+    insertedCases.flatMap((row, index) => [
+      {
+        caseId: row.id,
+        field: "document_number" as const,
+        maskedValue: `••••••${(4010 + index * 37).toString().padStart(4, "0")}`,
+        value: `SYN-DOC-${(4010 + index * 37).toString().padStart(4, "0")}-${row.customerCountry}`,
+      },
+      {
+        caseId: row.id,
+        field: "date_of_birth" as const,
+        maskedValue: "••••-••-••",
+        value: `198${index}-0${(index % 9) + 1}-1${index}`,
+      },
+      {
+        caseId: row.id,
+        field: "address" as const,
+        maskedValue: `••••••, ${row.customerCountry}`,
+        value: `${10 + index} Synthetic Street, Example Town, ${row.customerCountry}`,
+      },
+    ]),
+  );
+
+  await db.insert(kycCaseDocuments).values(
+    insertedCases.flatMap((row) => [
+      {
+        caseId: row.id,
+        documentType: "Certificate of incorporation",
+        status: "verified" as const,
+        receivedAt: daysFromNow(-7),
+      },
+      {
+        caseId: row.id,
+        documentType: "Director identity document",
+        status: row.riskLevel === "high" ? ("received" as const) : ("verified" as const),
+        receivedAt: daysFromNow(-6),
+      },
+      {
+        caseId: row.id,
+        documentType: "Proof of registered address",
+        status: row.status === "rejected" ? ("rejected" as const) : ("received" as const),
+        receivedAt: daysFromNow(-5),
+      },
+    ]),
+  );
+
+  await db.insert(kycCaseSignals).values(
+    insertedCases.flatMap((row) => {
+      const signals: (typeof kycCaseSignals.$inferInsert)[] = [
+        {
+          caseId: row.id,
+          code: "SANCTIONS_SCREEN",
+          severity: "low",
+          detail: "Sanctions screening returned no match.",
+          raisedAt: daysFromNow(-7),
+        },
+      ];
+      if (row.riskLevel !== "low") {
+        signals.push({
+          caseId: row.id,
+          code: "OWNERSHIP_STRUCTURE",
+          severity: "medium" as const,
+          detail: "Beneficial ownership chain spans more than two jurisdictions.",
+          raisedAt: daysFromNow(-6),
+        });
+      }
+      if (row.riskLevel === "high") {
+        signals.push({
+          caseId: row.id,
+          code: "ADVERSE_MEDIA",
+          severity: "high" as const,
+          detail: "Synthetic adverse media hit requires analyst review.",
+          raisedAt: daysFromNow(-5),
+        });
+      }
+      return signals;
+    }),
+  );
+
+  const inReviewCase = insertedCases.find((row) => row.status === "in_review");
+  if (inReviewCase) {
+    await db.insert(kycCaseNotes).values([
+      {
+        caseId: inReviewCase.id,
+        authorId: operator.id,
+        body: "Synthetic note: requested clarification on director appointment dates.",
+        createdAt: daysFromNow(-1),
+      },
+    ]);
+  }
 
   const approvedCase = insertedCases.find((row) => row.status === "approved");
   const rejectedCase = insertedCases.find((row) => row.status === "rejected");
@@ -169,6 +268,13 @@ async function main(): Promise<void> {
     },
   ]);
 
+  // €500.00 approval threshold; refunds above it must be escalated first.
+  await db.insert(refundApprovalPolicy).values({
+    currency: "EUR",
+    thresholdMinor: 50000,
+    updatedById: administrator.id,
+  });
+
   const insertedRefunds = await db
     .insert(refunds)
     .values([
@@ -189,8 +295,20 @@ async function main(): Promise<void> {
         amountMinor: 480000,
         currency: "EUR",
         reason: "Service outage credit agreed with the account team.",
+        status: "escalated" as const,
+        requestedById: operator.id,
+        escalatedById: administrator.id,
+        escalatedAt: daysFromNow(-1),
+      },
+      {
+        reference: "RFD-5005",
+        paymentReference: "PAY-88402",
+        customerAlias: "Wide World Importers (synthetic)",
+        amountMinor: 61000,
+        currency: "EUR",
+        reason: "Order cancelled before dispatch.",
         status: "pending_approval" as const,
-        requestedById: administrator.id,
+        requestedById: operator.id,
       },
       {
         reference: "RFD-5003",
@@ -215,6 +333,7 @@ async function main(): Promise<void> {
         requestedById: operator.id,
         approvedById: approver.id,
         decidedAt: daysFromNow(-3),
+        decisionNote: "Synthetic: customer withdrew the chargeback.",
       },
     ])
     .returning();
@@ -228,6 +347,8 @@ async function main(): Promise<void> {
         environment: "production" as const,
         enabled: true,
         rolloutPercentage: 25,
+        owner: "Payment operations",
+        targeting: [{ attribute: "country", operator: "in", values: ["EE", "FI"] }],
         updatedById: administrator.id,
       },
       {
@@ -236,6 +357,7 @@ async function main(): Promise<void> {
         environment: "staging" as const,
         enabled: true,
         rolloutPercentage: 100,
+        owner: "Payment operations",
         updatedById: administrator.id,
       },
       {
@@ -244,6 +366,7 @@ async function main(): Promise<void> {
         environment: "production" as const,
         enabled: false,
         rolloutPercentage: 0,
+        owner: "Financial crime operations",
         updatedById: administrator.id,
       },
       {
@@ -252,6 +375,16 @@ async function main(): Promise<void> {
         environment: "development" as const,
         enabled: true,
         rolloutPercentage: 100,
+        owner: "Financial crime operations",
+        updatedById: administrator.id,
+      },
+      {
+        key: "new-audit-explorer",
+        description: "Replace the audit table with the faceted explorer.",
+        environment: "development" as const,
+        enabled: false,
+        rolloutPercentage: 0,
+        owner: "Platform engineering",
         updatedById: administrator.id,
       },
     ])
@@ -293,13 +426,15 @@ async function main(): Promise<void> {
         proposedRollout: 10,
         reason: "Pilot auto-triage on the lowest risk band.",
         ticket: "PLAT-419",
-        status: "approved" as const,
+        status: "applied" as const,
+        appliedAt: daysFromNow(-1),
+        appliedById: approver.id,
       },
     ])
     .returning();
 
   const approvedChangeRequest = insertedChangeRequests.find(
-    (request) => request.status === "approved",
+    (request) => request.status === "applied",
   );
   if (!approvedChangeRequest) {
     throw new Error("Seed failed: change requests were not created.");
@@ -318,7 +453,10 @@ async function main(): Promise<void> {
   const rejectedRefund = insertedRefunds.find(
     (refund) => refund.status === "rejected",
   );
-  if (!settledRefund || !rejectedRefund) {
+  const escalatedRefund = insertedRefunds.find(
+    (refund) => refund.status === "escalated",
+  );
+  if (!settledRefund || !rejectedRefund || !escalatedRefund) {
     throw new Error("Seed failed: refunds were not created.");
   }
 
@@ -390,6 +528,21 @@ async function main(): Promise<void> {
       occurredAt: daysFromNow(-2),
     },
     {
+      action: "refund.escalated" as const,
+      actorId: administrator.id,
+      actorRole: administrator.role,
+      entityType: "refund",
+      entityId: escalatedRefund.id,
+      entityVersion: escalatedRefund.version,
+      summary: `Escalated refund ${escalatedRefund.reference} above the approval threshold.`,
+      metadata: {
+        amountMinor: escalatedRefund.amountMinor,
+        currency: "EUR",
+        thresholdMinor: 50000,
+      },
+      occurredAt: daysFromNow(-1),
+    },
+    {
       action: "flag_change_request.created" as const,
       actorId: administrator.id,
       actorRole: administrator.role,
@@ -412,9 +565,20 @@ async function main(): Promise<void> {
       occurredAt: daysFromNow(-1),
     },
     {
+      action: "flag_change_request.applied" as const,
+      actorId: approver.id,
+      actorRole: approver.role,
+      entityType: "change_request",
+      entityId: approvedChangeRequest.id,
+      entityVersion: approvedChangeRequest.version,
+      summary: `Applied change request ${approvedChangeRequest.reference}.`,
+      metadata: { proposedRollout: approvedChangeRequest.proposedRollout },
+      occurredAt: daysFromNow(-1),
+    },
+    {
       action: "flag.updated" as const,
-      actorId: administrator.id,
-      actorRole: administrator.role,
+      actorId: approver.id,
+      actorRole: approver.role,
       entityType: "feature_flag",
       entityId: productionTriageFlag.id,
       entityVersion: productionTriageFlag.version,

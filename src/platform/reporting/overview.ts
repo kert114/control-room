@@ -26,7 +26,7 @@ export async function loadOverviewCounts(): Promise<OverviewCounts> {
     .select({ value: count() })
     .from(kycCases)
     .where(
-      sql`${kycCases.status} in ('pending_review', 'in_review', 'escalated')`,
+      sql`${kycCases.status} in ('pending_review', 'in_review', 'escalated', 'information_requested')`,
     );
 
   const [kycBreaching] = await db
@@ -34,7 +34,7 @@ export async function loadOverviewCounts(): Promise<OverviewCounts> {
     .from(kycCases)
     .where(
       and(
-        sql`${kycCases.status} in ('pending_review', 'in_review', 'escalated')`,
+        sql`${kycCases.status} in ('pending_review', 'in_review', 'escalated', 'information_requested')`,
         sql`${kycCases.slaDueAt} < ${now.toISOString()}`,
       ),
     );
@@ -42,7 +42,7 @@ export async function loadOverviewCounts(): Promise<OverviewCounts> {
   const [refundsPending] = await db
     .select({ value: count() })
     .from(refunds)
-    .where(eq(refunds.status, "pending_approval"));
+    .where(sql`${refunds.status} in ('pending_approval', 'escalated')`);
 
   const [refundsApproved] = await db
     .select({

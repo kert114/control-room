@@ -5,18 +5,14 @@ import {
   canApproveOwnRecord,
   isReadOnly,
   PERMISSION_MATRIX,
+  PERMISSIONS,
   ROLES,
   type Permission,
 } from "@/platform/authz/policy";
 
-const WRITE_PERMISSIONS: Permission[] = [
-  "kyc.decide",
-  "refunds.request",
-  "refunds.approve",
-  "flags.request_change",
-  "flags.approve_change",
-  "flags.edit_nonproduction",
-];
+const WRITE_PERMISSIONS: Permission[] = PERMISSIONS.filter(
+  (permission) => !permission.endsWith(".read"),
+);
 
 describe("authorization matrix", () => {
   it("gives every role read access to the tools it can see", () => {
@@ -28,8 +24,31 @@ describe("authorization matrix", () => {
 
   it("keeps the auditor read-only", () => {
     expect(isReadOnly("auditor")).toBe(true);
+    expect(WRITE_PERMISSIONS.length).toBeGreaterThan(0);
     for (const permission of WRITE_PERMISSIONS) {
       expect(can("auditor", permission)).toBe(false);
+    }
+  });
+
+  it("lets operators claim, request information, and unmask but not reassign", () => {
+    expect(can("operator", "kyc.claim")).toBe(true);
+    expect(can("operator", "kyc.request_info")).toBe(true);
+    expect(can("operator", "kyc.unmask")).toBe(true);
+    expect(can("operator", "kyc.assign")).toBe(false);
+    expect(can("approver", "kyc.assign")).toBe(true);
+    expect(can("administrator", "kyc.assign")).toBe(true);
+  });
+
+  it("lets requesters escalate refunds but not approvers", () => {
+    expect(can("operator", "refunds.escalate")).toBe(true);
+    expect(can("administrator", "refunds.escalate")).toBe(true);
+    expect(can("approver", "refunds.escalate")).toBe(false);
+  });
+
+  it("restricts the kill switch to administrators", () => {
+    expect(can("administrator", "flags.kill")).toBe(true);
+    for (const role of ["operator", "approver", "auditor"] as const) {
+      expect(can(role, "flags.kill")).toBe(false);
     }
   });
 

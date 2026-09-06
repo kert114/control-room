@@ -60,7 +60,6 @@ test.describe("platform foundation", () => {
       await expect(
         page.getByRole("heading", { level: 1, name: heading }),
       ).toBeVisible();
-      await expect(page.getByText("Module not implemented yet")).toBeVisible();
     }
   });
 
@@ -96,22 +95,22 @@ test.describe("platform foundation", () => {
     await expect(page.getByText("No matching records")).toBeVisible();
   });
 
-  test("auditor read-only surface exposes no write access", async ({ page }) => {
-    await signIn(page, ACCOUNTS.auditor);
-    await page.goto("/refunds");
-    await expect(page.getByText("None — read only")).toBeVisible();
-  });
-
-  test("operator write access differs from the approver", async ({ page }) => {
-    await signIn(page, ACCOUNTS.operator);
-    await page.goto("/refunds");
-    await expect(page.getByText("refunds.request")).toBeVisible();
-
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await page.waitForURL("**/signin");
-
-    await signIn(page, ACCOUNTS.approver);
-    await page.goto("/refunds");
-    await expect(page.getByText("refunds.approve")).toBeVisible();
+  test("every role can open every module route", async ({ page }) => {
+    for (const [role, email] of Object.entries(ACCOUNTS)) {
+      await signIn(page, email);
+      await expect(page.getByText(`· ${role}`)).toBeVisible();
+      for (const [route, heading] of [
+        ["/kyc", "KYC reviews"],
+        ["/refunds", "Refunds"],
+        ["/flags", "Feature flags"],
+      ] as const) {
+        await page.goto(route);
+        await expect(
+          page.getByRole("heading", { level: 1, name: heading }),
+        ).toBeVisible();
+      }
+      await page.getByRole("button", { name: "Sign out" }).click();
+      await page.waitForURL("**/signin");
+    }
   });
 });

@@ -1,10 +1,82 @@
-import { refundsModule } from "@/modules/refunds/module";
+import Link from "next/link";
+
+import { can } from "@/platform/authz/policy";
 import { requirePermission } from "@/platform/auth/session";
-import { ModulePlaceholder } from "@/platform/ui/module-placeholder";
+
+import { RefundsWorkspace } from "@/app/(app)/refunds/refunds-workspace";
+import { permissionForDecision } from "@/modules/refunds/decisions";
+import { getPolicy, getRefundDetail, listRefunds, summarizeRefunds, volumeByStatus } from "@/modules/refunds/queries";
+import {
+  buildRefundsHref,
+  parseListParams,
+  REFUNDS_COMPARE_PATH,
+  type ListParams,
+} from "@/modules/refunds/params";
+import { availableDecisions } from "@/modules/refunds/transitions";
 
 export const dynamic = "force-dynamic";
 
-export default async function RefundsPage(): Promise<React.ReactElement> {
+export default async function RefundsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<React.ReactElement> {
   const actor = await requirePermission("refunds.read");
-  return <ModulePlaceholder module={refundsModule} role={actor.role} />;
+  const raw = await searchParams;
+  const parsed = parseListParams(raw);
+  const baseParams: ListParams = {
+    ...parsed,
+    step: !parsed.refund
+      ? 1
+      : (Math.min(parsed.step, 2) as 1 | 2),
+  };
+  const [list, summary, volume, detail, policy] = await Promise.all([
+    listRefunds(baseParams),
+    summarizeRefunds(),
+    volumeByStatus(),
+    baseParams.refund ? getRefundDetail(baseParams.refund) : Promise.resolve(null),
+    getPolicy(),
+  ]);
+  const allowedDecisions = detail
+    ? availableDecisions(detail.status).filter((decision) =>
+        can(actor.role, permissionForDecision(decision)),
+      )
+    : [];
+  const decision =
+    detail && parsed.decision && allowedDecisions.includes(parsed.decision)
+      ? parsed.decision
+      : undefined;
+  const params: ListParams = {
+    ...baseParams,
+    step: !parsed.refund ? 1 : decision ? 3 : 2,
+    decision,
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="rounded-control border border-line bg-panel px-3 py-2 text-meta text-muted">
+        Variant A (staged decision).{" "}
+        <Link
+          href={buildRefundsHref(
+            { ...params, decision: undefined, step: params.step === 3 ? 2 : params.step },
+            REFUNDS_COMPARE_PATH,
+          )}
+          className="text-primary underline"
+        >
+          Switch to variant B
+        </Link>
+      </p>
+      <RefundsWorkspace
+        actor={actor}
+        params={params}
+        list={list}
+        summary={summary}
+        volume={volume}
+        detail={detail}
+        policy={policy}
+        missing={Boolean(params.refund) && !detail}
+        allowedDecisions={allowedDecisions}
+      />
+    </div>
+  );
 }

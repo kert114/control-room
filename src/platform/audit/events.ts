@@ -11,6 +11,15 @@ export const AUDIT_ACTIONS = [
   "flag_change_request.approved",
   "flag_change_request.rejected",
   "flag.updated",
+  "kyc_case.claimed",
+  "kyc_case.reassigned",
+  "kyc_case.information_requested",
+  "kyc_case.identity_unmasked",
+  "refund.escalated",
+  "flag_change_request.applied",
+  "flag_change_request.cancelled",
+  "flag.kill_switch_requested",
+  "flag.kill_switch_applied",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

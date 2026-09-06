@@ -12,13 +12,19 @@ export const PERMISSIONS = [
   "audit.read",
   "kyc.read",
   "kyc.decide",
+  "kyc.claim",
+  "kyc.assign",
+  "kyc.request_info",
+  "kyc.unmask",
   "refunds.read",
   "refunds.request",
   "refunds.approve",
+  "refunds.escalate",
   "flags.read",
   "flags.request_change",
   "flags.approve_change",
   "flags.edit_nonproduction",
+  "flags.kill",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -32,21 +38,40 @@ const READ_ONLY: readonly Permission[] = [
 ];
 
 export const PERMISSION_MATRIX: Record<Role, readonly Permission[]> = {
-  operator: [...READ_ONLY, "kyc.decide", "refunds.request", "flags.request_change"],
+  operator: [
+    ...READ_ONLY,
+    "kyc.decide",
+    "kyc.claim",
+    "kyc.request_info",
+    "kyc.unmask",
+    "refunds.request",
+    "refunds.escalate",
+    "flags.request_change",
+  ],
   approver: [
     ...READ_ONLY,
     "kyc.decide",
+    "kyc.claim",
+    "kyc.assign",
+    "kyc.request_info",
+    "kyc.unmask",
     "refunds.approve",
     "flags.approve_change",
   ],
   administrator: [
     ...READ_ONLY,
     "kyc.decide",
+    "kyc.claim",
+    "kyc.assign",
+    "kyc.request_info",
+    "kyc.unmask",
     "refunds.request",
     "refunds.approve",
+    "refunds.escalate",
     "flags.request_change",
     "flags.approve_change",
     "flags.edit_nonproduction",
+    "flags.kill",
   ],
   auditor: READ_ONLY,
 };

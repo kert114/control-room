@@ -10,8 +10,9 @@ export const flagsModule: ModuleDefinition = {
     "flags.request_change",
     "flags.approve_change",
     "flags.edit_nonproduction",
+    "flags.kill",
   ],
   steps: ["Browse flags", "Set rollout", "Approve production"],
-  status: "placeholder",
+  status: "live",
   owner: "Platform engineering",
 };
