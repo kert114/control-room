@@ -147,8 +147,13 @@ test.describe("feature flags", () => {
     await page.reload();
     await expect(page.getByLabel("Flag", { exact: true })).toHaveValue("instant-refunds");
     await expect(page.getByTestId("flag-row")).toHaveCount(2);
+    await page.getByLabel("Environment").selectOption("staging");
+    await page.getByRole("button", { name: "Filter flags" }).click();
+    await expect(page.getByTestId("flag-row")).toHaveCount(1);
     await page.getByRole("link", { name: "Clear filters" }).click();
     await expect(page).toHaveURL(/\/flags$/);
+    await expect(page.getByLabel("Flag", { exact: true })).toHaveValue("");
+    await expect(page.getByLabel("Environment")).toHaveValue("");
   });
 
   test("service health panel shows normalised signals from every mock provider", async ({ page }) => {
@@ -176,6 +181,12 @@ test.describe("feature flags", () => {
     await expect(page.getByTestId("outcome-notice")).toContainText("Flag updated");
     await expect(detail(page)).toContainText(before ? "Everyone in the rollout" : "country is one of EE");
     await expect(form.getByLabel("Estonia (EE)")).toHaveJSProperty("checked", !before);
+
+    // Selecting another flag must start its form from that flag's own state.
+    await selectFlag(page, "new-audit-explorer", "development");
+    const other = detail(page).locator("form", { hasText: "Set rollout" });
+    await expect(other.getByLabel("Estonia (EE)")).not.toBeChecked();
+    await expect(other.getByLabel("Reason")).toHaveValue("");
   });
 
   test("production change needs a second person: operator requests, approver applies", async ({

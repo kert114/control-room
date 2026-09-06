@@ -106,7 +106,7 @@ export function FlagDetailPanel({
         <section aria-label="Actions" className="flex flex-col gap-3 border-t border-line pt-3">
           {showKill ? (
             <>
-              <KillSwitchForm
+              <KillSwitchForm key={`kill-${flag.id}-${flag.version}`}
                 flag={{ id: flag.id, key: flag.key, version: flag.version }}
                 production={production}
                 returnTo={returnTo}
@@ -121,7 +121,7 @@ export function FlagDetailPanel({
           ) : (
             <>
               {production && canRequest ? (
-                <RolloutForm
+                <RolloutForm key={`request-${flag.id}-${flag.version}`}
                   mode="request"
                   returnTo={returnTo}
                   flag={{
@@ -136,7 +136,7 @@ export function FlagDetailPanel({
                 />
               ) : null}
               {!production && canEditDirectly ? (
-                <RolloutForm
+                <RolloutForm key={`direct-${flag.id}-${flag.version}`}
                   mode="direct"
                   returnTo={returnTo}
                   flag={{
@@ -301,7 +301,7 @@ function RequestDetail({
             ) : null}
           </>
         ) : canApprove ? (
-          <DecisionForm
+          <DecisionForm key={`decision-${request.id}-${request.version}`}
             returnTo={returnTo}
             request={{
               requestId: request.id,

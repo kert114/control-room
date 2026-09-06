@@ -22,6 +22,8 @@ export function FlagFilters({
   const active = Boolean(query.q || query.key || query.env || query.owner);
   return (
     <form
+      // Uncontrolled inputs keep their DOM value across client navigations; remount on filter change.
+      key={[query.q, query.key, query.env, query.owner].join("|")}
       method="get"
       action="/flags"
       role="search"
