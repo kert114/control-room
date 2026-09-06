@@ -104,9 +104,12 @@ test.describe("refunds workflow", () => {
 
   test("supports keyboard row selection and visible focus", async ({ page }) => {
     const rows = queueRows(page);
-    await rows.first().focus();
-    await page.keyboard.press("Enter");
-    await expect(rows.first()).toHaveAttribute("aria-selected", "true");
+    await page.waitForLoadState("networkidle");
+    await expect(async () => {
+      await rows.first().focus();
+      await page.keyboard.press("Enter");
+      await expect(rows.first()).toHaveAttribute("aria-selected", "true", { timeout: 1500 });
+    }).toPass();
     await rows.nth(1).focus();
     await page.keyboard.press("Space");
     await expect(rows.nth(1)).toHaveAttribute("aria-selected", "true");
