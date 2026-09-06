@@ -1,15 +1,18 @@
+import Link from "next/link";
+
+import { can } from "@/platform/authz/policy";
 import { requirePermission } from "@/platform/auth/session";
 
 import { RefundsWorkspace } from "@/app/(app)/refunds/refunds-workspace";
-import { describeDecisions } from "@/modules/refunds/decisions";
+import { permissionForDecision } from "@/modules/refunds/decisions";
+import { getPolicy, getRefundDetail, listRefunds, summarizeRefunds, volumeByStatus } from "@/modules/refunds/queries";
 import {
-  getPolicy,
-  getRefundDetail,
-  listRefunds,
-  summarizeRefunds,
-  volumeByStatus,
-} from "@/modules/refunds/queries";
-import { isOpenStatus, parseListParams, type ListParams } from "@/modules/refunds/params";
+  buildRefundsHref,
+  parseListParams,
+  REFUNDS_COMPARE_PATH,
+  type ListParams,
+} from "@/modules/refunds/params";
+import { availableDecisions } from "@/modules/refunds/transitions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,40 +22,61 @@ export default async function RefundsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<React.ReactElement> {
   const actor = await requirePermission("refunds.read");
-  const parsed = parseListParams(await searchParams);
-  const params: ListParams = {
+  const raw = await searchParams;
+  const parsed = parseListParams(raw);
+  const baseParams: ListParams = {
     ...parsed,
-    decision: undefined,
-    step: !parsed.refund ? 1 : parsed.step === 3 ? 3 : 2,
+    step: !parsed.refund
+      ? 1
+      : (Math.min(parsed.step, 2) as 1 | 2),
   };
   const [list, summary, volume, detail, policy] = await Promise.all([
-    listRefunds(params),
+    listRefunds(baseParams),
     summarizeRefunds(),
-    volumeByStatus(params.range),
-    params.refund ? getRefundDetail(params.refund) : Promise.resolve(null),
+    volumeByStatus(),
+    baseParams.refund ? getRefundDetail(baseParams.refund) : Promise.resolve(null),
     getPolicy(),
   ]);
-  const options =
-    detail && policy ? describeDecisions({ actor, refund: detail, policy }) : [];
-  const open = list.filter((row) => isOpenStatus(row.status));
-  const selectedIndex = open.findIndex((row) => row.id === params.refund);
-  const nextOpen =
-    open.find((row, index) => index > selectedIndex) ??
-    open.find((row) => row.id !== params.refund) ??
-    null;
+  const allowedDecisions = detail
+    ? availableDecisions(detail.status).filter((decision) =>
+        can(actor.role, permissionForDecision(decision)),
+      )
+    : [];
+  const decision =
+    detail && parsed.decision && allowedDecisions.includes(parsed.decision)
+      ? parsed.decision
+      : undefined;
+  const params: ListParams = {
+    ...baseParams,
+    step: !parsed.refund ? 1 : decision ? 3 : 2,
+    decision,
+  };
 
   return (
-    <RefundsWorkspace
-      actor={actor}
-      params={params}
-      list={list}
-      summary={summary}
-      volume={volume}
-      detail={detail}
-      policy={policy}
-      missing={Boolean(params.refund) && !detail}
-      options={options}
-      nextOpen={nextOpen}
-    />
+    <div className="flex flex-col gap-3">
+      <p className="rounded-control border border-line bg-panel px-3 py-2 text-meta text-muted">
+        Variant A (staged decision).{" "}
+        <Link
+          href={buildRefundsHref(
+            { ...params, decision: undefined, step: params.step === 3 ? 2 : params.step },
+            REFUNDS_COMPARE_PATH,
+          )}
+          className="text-primary underline"
+        >
+          Switch to variant B
+        </Link>
+      </p>
+      <RefundsWorkspace
+        actor={actor}
+        params={params}
+        list={list}
+        summary={summary}
+        volume={volume}
+        detail={detail}
+        policy={policy}
+        missing={Boolean(params.refund) && !detail}
+        allowedDecisions={allowedDecisions}
+      />
+    </div>
   );
 }

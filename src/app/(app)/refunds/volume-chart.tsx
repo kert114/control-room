@@ -16,16 +16,13 @@ import type { VolumePoint } from "@/modules/refunds/queries";
 export function VolumeChart({
   data,
   currency,
-  periodLabel,
 }: {
   data: VolumePoint[];
   currency: string;
-  periodLabel: string;
 }): React.ReactElement {
-  const label = `Refund volume by status (${periodLabel})`;
   return (
     <div className="min-w-0 w-full overflow-hidden">
-      <div className="h-28 w-full" role="img" aria-label={label}>
+      <div className="h-28 w-full" role="img" aria-label="Refund volume by status">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid stroke="var(--cr-border)" vertical={false} />
@@ -63,7 +60,7 @@ export function VolumeChart({
         </ResponsiveContainer>
       </div>
       <table className="sr-only">
-        <caption>{label}</caption>
+        <caption>Refund volume by status</caption>
         <thead>
           <tr>
             <th scope="col">Status</th>

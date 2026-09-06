@@ -5,7 +5,6 @@ import {
   eq,
   gte,
   ilike,
-  inArray,
   lte,
   or,
   sql,
@@ -23,12 +22,8 @@ import {
 import type { Role } from "@/platform/authz/policy";
 
 import { STATUS_LABEL, formatMoney } from "@/modules/refunds/format";
-import {
-  effectiveStatuses,
-  type ListParams,
-  type RefundStatus,
-  type VolumeRange,
-} from "@/modules/refunds/params";
+import type { ListParams } from "@/modules/refunds/params";
+import type { RefundStatus } from "@/modules/refunds/params";
 
 const requester = alias(users, "refund_requester");
 const approver = alias(users, "refund_approver");
@@ -60,7 +55,11 @@ export async function listRefunds(
       ),
     );
   }
-  filters.push(inArray(refunds.status, [...effectiveStatuses(params.status)]));
+  if (params.status === "open") {
+    filters.push(sql`${refunds.status} in ('pending_approval', 'escalated')`);
+  } else if (params.status !== "all") {
+    filters.push(eq(refunds.status, params.status));
+  }
   if (params.min !== undefined) filters.push(gte(refunds.amountMinor, params.min));
   if (params.max !== undefined) filters.push(lte(refunds.amountMinor, params.max));
 
@@ -207,15 +206,7 @@ const VOLUME_STATUSES: RefundStatus[] = [
   "settled",
 ];
 
-const RANGE_DAYS: Record<Exclude<VolumeRange, "all">, number> = {
-  week: 7,
-  month: 30,
-  year: 365,
-};
-
-export async function volumeByStatus(range: VolumeRange = "all"): Promise<VolumePoint[]> {
-  const since =
-    range === "all" ? undefined : new Date(Date.now() - RANGE_DAYS[range] * 86_400_000);
+export async function volumeByStatus(): Promise<VolumePoint[]> {
   const rows = await db
     .select({
       status: refunds.status,
@@ -223,7 +214,6 @@ export async function volumeByStatus(range: VolumeRange = "all"): Promise<Volume
       amountMinor: sql<number>`coalesce(sum(${refunds.amountMinor}), 0)::int`,
     })
     .from(refunds)
-    .where(since ? gte(refunds.createdAt, since) : undefined)
     .groupBy(refunds.status);
   const byStatus = new Map(rows.map((row) => [row.status, row]));
   return VOLUME_STATUSES.map((status) => ({
