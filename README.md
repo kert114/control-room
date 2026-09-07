@@ -3,6 +3,10 @@
 The one-pager: 
 [Engineering decisions](./engineering-decisions.md).
 
+The videos can be downloaded from [`demo/`](./demo):
+[Loom video](./demo/Loom-video-Kert-Laansalu.mp4) and
+[extra demo](./demo/Control-Room-Demo-EXTRA.mp4).
+
 Control Room is an internal-tools platform for a fintech engineering team: one
 authenticated, audited, role-aware shell that many small operational tools plug
 into. It replaces the Power Apps pattern of one disconnected app per workflow.
