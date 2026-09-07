@@ -1,11 +1,11 @@
 import { Panel } from "@/platform/ui/panel";
 
-import { RefundDetailPanel } from "@/modules/refunds/ui/refund-detail";
-import { RefundsFilters } from "@/modules/refunds/ui/refunds-filters";
-import { RefundsTable } from "@/modules/refunds/ui/refunds-table";
-import { RefundSummaryRow } from "@/modules/refunds/ui/refund-summary";
-import { StepControl } from "@/modules/refunds/ui/step-control";
-import { VolumeChart } from "@/modules/refunds/ui/volume-chart";
+import { RefundDetailPanel } from "@/app/(app)/refunds/refund-detail";
+import { RefundsFilters } from "@/app/(app)/refunds/refunds-filters";
+import { RefundsTable } from "@/app/(app)/refunds/refunds-table";
+import { RefundSummaryRow } from "@/app/(app)/refunds/refund-summary";
+import { StepControl } from "@/app/(app)/refunds/step-control";
+import { VolumeChart } from "@/app/(app)/refunds/volume-chart";
 import type { Decision, ListParams } from "@/modules/refunds/params";
 import type {
   RefundDetail,

@@ -68,4 +68,5 @@ Demo accounts (only when `DEMO_MODE=true`), password `control-room-demo`:
 | `pnpm db:migrate` | Apply migrations |
 | `pnpm db:seed` | Load synthetic demo data |
 
-Contributor rules live in [AGENTS.md](./AGENTS.md).
+Contributor rules live in [AGENTS.md](./AGENTS.md); the pre-PR quality gate is
+[.agents/skills/verify-fintech-tool/SKILL.md](./.agents/skills/verify-fintech-tool/SKILL.md).

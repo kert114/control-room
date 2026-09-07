@@ -110,6 +110,7 @@ export function parseListParams(
 }
 
 export const REFUNDS_PATH = "/refunds";
+export const REFUNDS_COMPARE_PATH = "/refunds/compare";
 
 export function buildRefundsHref(
   params: Partial<ListParams>,
