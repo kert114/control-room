@@ -4,7 +4,7 @@ import { Panel } from "@/platform/ui/panel";
 import { StatusBadge } from "@/platform/ui/status-badge";
 import type { Role } from "@/platform/authz/policy";
 
-import { DecisionForm } from "@/app/(app)/refunds/decision-form";
+import { DecisionForm } from "@/modules/refunds/ui/decision-form";
 import { formatDateTime, formatMoney, STATUS_LABEL, statusTone } from "@/modules/refunds/format";
 import type { Decision, ListParams } from "@/modules/refunds/params";
 import type { RefundDetail } from "@/modules/refunds/queries";
