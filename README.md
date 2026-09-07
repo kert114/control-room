@@ -1,5 +1,7 @@
 # Control Room
 
+Check it out on Vercel: [Control Room](https://control-room-phi-seven.vercel.app/).
+
 The one-pager: 
 [Engineering decisions](./engineering-decisions.md).
 
