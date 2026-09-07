@@ -66,4 +66,3 @@ binding for every session that edits this repository.
   unit tests.
 - Browser tests cover the signed-out redirect, demo sign-in, module routes, and
   the audit trail. Add a browser test for each new user-facing workflow.
-- Run `.agents/skills/verify-fintech-tool/SKILL.md` before handing work over.

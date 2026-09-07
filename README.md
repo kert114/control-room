@@ -72,5 +72,4 @@ the real SSO path (Entra ID) carries its own protections.
 | `pnpm db:migrate` | Apply migrations |
 | `pnpm db:seed` | Load synthetic demo data |
 
-Contributor rules live in [AGENTS.md](./AGENTS.md); the pre-PR quality gate is
-[.agents/skills/verify-fintech-tool/SKILL.md](./.agents/skills/verify-fintech-tool/SKILL.md).
+Contributor rules live in [AGENTS.md](./AGENTS.md).
