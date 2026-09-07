@@ -1,5 +1,8 @@
 # Control Room
 
+The one-pager: 
+[Engineering decisions](./engineering-decisions.md).
+
 Control Room is an internal-tools platform for a fintech engineering team: one
 authenticated, audited, role-aware shell that many small operational tools plug
 into. It replaces the Power Apps pattern of one disconnected app per workflow.
