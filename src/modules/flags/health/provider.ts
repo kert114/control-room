@@ -66,7 +66,8 @@ export async function collectServiceHealth(
       try {
         const signals = await provider.fetchSignals();
         return { providerId: provider.id, providerName: provider.name, status: "ok", signals };
-      } catch {
+      } catch (error: unknown) {
+        console.error(`Service-health provider ${provider.id} failed.`, error);
         return { providerId: provider.id, providerName: provider.name, status: "unavailable", signals: [] };
       }
     }),

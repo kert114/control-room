@@ -1,12 +1,17 @@
 import { AuditExplorer } from "@/app/(app)/audit/audit-explorer";
 import { requirePermission } from "@/platform/auth/session";
-import { loadAuditEntries } from "@/platform/reporting/overview";
+import {
+  AUDIT_LIST_LIMIT,
+  countAuditEntries,
+  loadAuditEntries,
+} from "@/platform/reporting/overview";
+import { TruncationNotice } from "@/platform/ui/truncation-notice";
 
 export const dynamic = "force-dynamic";
 
 export default async function AuditPage(): Promise<React.ReactElement> {
   await requirePermission("audit.read");
-  const entries = await loadAuditEntries();
+  const [entries, total] = await Promise.all([loadAuditEntries(), countAuditEntries()]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -16,6 +21,7 @@ export default async function AuditPage(): Promise<React.ReactElement> {
           Every business mutation and its audit event commit together.
         </p>
       </div>
+      <TruncationNotice shown={AUDIT_LIST_LIMIT} total={total} noun="audit events" />
       <AuditExplorer
         entries={entries.map((entry) => ({
           ...entry,

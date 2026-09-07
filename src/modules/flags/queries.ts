@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
 import { db, type Executor } from "@/platform/db/client";
@@ -146,8 +146,15 @@ export interface FlagDetail extends Omit<FeatureFlagRow, "targeting"> {
   updatedByName: string | null;
   openRequest: ChangeRequestSummary | null;
   requests: ChangeRequestSummary[];
+  /** Total change requests for the flag; `requests` holds at most `REQUESTS_LIMIT`. */
+  requestsTotal: number;
   history: HistoryEntry[];
+  /** Total audit events for the flag and its requests; `history` holds at most `HISTORY_LIMIT`. */
+  historyTotal: number;
 }
+
+export const REQUESTS_LIMIT = 20;
+export const HISTORY_LIMIT = 30;
 
 export interface ChangeRequestSummary {
   id: string;
@@ -176,6 +183,17 @@ export interface HistoryEntry {
   occurredAt: Date;
 }
 
+async function countHistory(entityIds: string[], executor: Executor): Promise<number> {
+  if (entityIds.length === 0) {
+    return 0;
+  }
+  const [row] = await executor
+    .select({ value: count() })
+    .from(auditEvents)
+    .where(inArray(auditEvents.entityId, entityIds));
+  return row?.value ?? 0;
+}
+
 async function loadHistory(
   entityIds: string[],
   executor: Executor,
@@ -195,7 +213,7 @@ async function loadHistory(
     .leftJoin(users, eq(users.id, auditEvents.actorId))
     .where(inArray(auditEvents.entityId, entityIds))
     .orderBy(desc(auditEvents.occurredAt))
-    .limit(30);
+    .limit(HISTORY_LIMIT);
   return rows.map((row) => ({ ...row, actor: row.actor ?? "System" }));
 }
 
@@ -241,12 +259,15 @@ export async function getFlagDetail(
     .innerJoin(users, eq(users.id, changeRequests.requestedById))
     .where(eq(changeRequests.flagId, id))
     .orderBy(desc(changeRequests.createdAt))
-    .limit(20);
+    .limit(REQUESTS_LIMIT);
+  const [requestsCount] = await executor
+    .select({ value: count() })
+    .from(changeRequests)
+    .where(eq(changeRequests.flagId, id));
 
-  const history = await loadHistory(
-    [id, ...requests.map((request) => request.id)],
-    executor,
-  );
+  const historyIds = [id, ...requests.map((request) => request.id)];
+  const history = await loadHistory(historyIds, executor);
+  const historyTotal = await countHistory(historyIds, executor);
 
   return {
     ...row.flag,
@@ -254,7 +275,9 @@ export async function getFlagDetail(
     updatedByName: row.updatedByName,
     openRequest: requests.find((request) => isOpen(request.status)) ?? null,
     requests,
+    requestsTotal: requestsCount?.value ?? 0,
     history,
+    historyTotal,
   };
 }
 

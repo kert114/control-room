@@ -7,6 +7,7 @@ import { Pool } from "pg";
 
 import { DEMO_PASSWORD, DEMO_USERS } from "@/platform/auth/demo";
 import { readEnv } from "@/platform/config/env";
+import { poolConfig } from "@/platform/db/client";
 import {
   approvals,
   auditEvents,
@@ -40,7 +41,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const pool = new Pool({ connectionString: DATABASE_URL, max: 1 });
+  const pool = new Pool(poolConfig(DATABASE_URL, 1));
   const db = drizzle(pool);
 
   await db.execute(

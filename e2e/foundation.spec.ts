@@ -26,6 +26,34 @@ test.describe("platform foundation", () => {
     ).toBeVisible();
   });
 
+  test("middleware gates unknown application routes and sets security headers", async ({
+    page,
+  }) => {
+    const response = await page.goto("/not-a-registered-tool");
+    await expect(page).toHaveURL(/\/signin/);
+    const headers = response?.headers() ?? {};
+    expect(headers["x-content-type-options"]).toBe("nosniff");
+    expect(headers["x-frame-options"]).toBe("DENY");
+    expect(headers["referrer-policy"]).toBeTruthy();
+    expect(headers["strict-transport-security"]).toContain("max-age=");
+    expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+  });
+
+  test("service health observations are recent, not pinned to a fixed date", async ({
+    page,
+  }) => {
+    await signIn(page, ACCOUNTS.operator);
+    await page.goto("/flags");
+    const observed = page.getByTestId("service-health").locator("time[datetime]");
+    await expect(observed.first()).toBeVisible();
+    for (const stamp of await observed.all()) {
+      const value = await stamp.getAttribute("datetime");
+      const ageMs = Date.now() - new Date(value ?? "").getTime();
+      expect(ageMs).toBeGreaterThanOrEqual(0);
+      expect(ageMs).toBeLessThan(10 * 60 * 1000);
+    }
+  });
+
   test("rejects an unknown demo password", async ({ page }) => {
     await page.goto("/signin");
     await page.getByLabel("Demo account").selectOption(ACCOUNTS.operator);

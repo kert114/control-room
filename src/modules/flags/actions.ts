@@ -127,6 +127,41 @@ async function nextReference(tx: Transaction): Promise<string> {
   return `CR-${(row?.max ?? 9000) + 1}`;
 }
 
+/** Two requests computing `nextReference` at once collide on the unique index. */
+export function isReferenceCollision(error: unknown): boolean {
+  for (let current = error; current instanceof Error; current = current.cause) {
+    if (
+      "code" in current &&
+      current.code === "23505" &&
+      "constraint" in current &&
+      current.constraint === "change_requests_reference_key"
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function insertChangeRequest(
+  tx: Transaction,
+  values: typeof changeRequests.$inferInsert,
+): Promise<ChangeRequestRow> {
+  try {
+    const [request] = await tx.insert(changeRequests).values(values).returning();
+    if (!request) {
+      throw new Error("Change request insert returned no row.");
+    }
+    return request;
+  } catch (error: unknown) {
+    if (isReferenceCollision(error)) {
+      throw new BusinessRuleError(
+        "Another change request was raised at the same moment. Submit again to get a fresh reference.",
+      );
+    }
+    throw error;
+  }
+}
+
 function assertIsAChange(
   flag: Pick<FeatureFlagRow, "enabled" | "rolloutPercentage">,
   proposed: Pick<RolloutChangeInput, "enabled" | "rolloutPercentage">,
@@ -218,26 +253,20 @@ export async function createChangeRequest(
     assertIsAChange(flag, input);
 
     const reference = await nextReference(tx);
-    const [request] = await tx
-      .insert(changeRequests)
-      .values({
-        reference,
-        flagId: flag.id,
-        requestedById: actor.id,
-        previousEnabled: flag.enabled,
-        previousRollout: flag.rolloutPercentage,
-        proposedEnabled: input.enabled,
-        proposedRollout: input.rolloutPercentage,
-        reason: input.reason,
-        ticket: input.ticket ?? null,
-        kind: "rollout",
-        status: "pending_approval",
-        requiresApproval: true,
-      })
-      .returning();
-    if (!request) {
-      throw new Error("Change request insert returned no row.");
-    }
+    const request = await insertChangeRequest(tx, {
+      reference,
+      flagId: flag.id,
+      requestedById: actor.id,
+      previousEnabled: flag.enabled,
+      previousRollout: flag.rolloutPercentage,
+      proposedEnabled: input.enabled,
+      proposedRollout: input.rolloutPercentage,
+      reason: input.reason,
+      ticket: input.ticket ?? null,
+      kind: "rollout",
+      status: "pending_approval",
+      requiresApproval: true,
+    });
 
     await audit({
       action: "flag_change_request.created",
@@ -277,7 +306,7 @@ export async function applyDirectChange(
 
     const reference = await nextReference(tx);
     const now = new Date();
-    await tx.insert(changeRequests).values({
+    await insertChangeRequest(tx, {
       reference,
       flagId: flag.id,
       requestedById: actor.id,
@@ -347,27 +376,21 @@ export async function requestKillSwitch(
     const reference = await nextReference(tx);
     const production = requiresChangeRequest(flag.environment);
     const now = new Date();
-    const [request] = await tx
-      .insert(changeRequests)
-      .values({
-        reference,
-        flagId: flag.id,
-        requestedById: actor.id,
-        previousEnabled: flag.enabled,
-        previousRollout: flag.rolloutPercentage,
-        proposedEnabled: false,
-        proposedRollout: 0,
-        reason: input.reason,
-        kind: "kill_switch",
-        status: production ? "pending_approval" : "applied",
-        requiresApproval: production,
-        appliedAt: production ? null : now,
-        appliedById: production ? null : actor.id,
-      })
-      .returning();
-    if (!request) {
-      throw new Error("Change request insert returned no row.");
-    }
+    const request = await insertChangeRequest(tx, {
+      reference,
+      flagId: flag.id,
+      requestedById: actor.id,
+      previousEnabled: flag.enabled,
+      previousRollout: flag.rolloutPercentage,
+      proposedEnabled: false,
+      proposedRollout: 0,
+      reason: input.reason,
+      kind: "kill_switch",
+      status: production ? "pending_approval" : "applied",
+      requiresApproval: production,
+      appliedAt: production ? null : now,
+      appliedById: production ? null : actor.id,
+    });
 
     if (production) {
       await audit({

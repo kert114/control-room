@@ -11,7 +11,14 @@ import type {
  * All data is synthetic.
  */
 
-const OBSERVED_AT = new Date("2026-09-05T14:55:00Z");
+/**
+ * Each mock reports a fixed number of minutes before the current minute, so
+ * the timestamps read as fresh on any day yet stay stable within a minute.
+ */
+function observedMinutesAgo(minutes: number): Date {
+  const now = Date.now();
+  return new Date(now - (now % 60_000) - minutes * 60_000);
+}
 
 interface DatadogMonitor {
   name: string;
@@ -34,7 +41,7 @@ function fromDatadog(monitor: DatadogMonitor): ServiceHealthSignal {
     status: DATADOG_STATE[monitor.overall_state],
     detail: monitor.message,
     owner: team,
-    observedAt: OBSERVED_AT,
+    observedAt: observedMinutesAgo(2),
   };
 }
 
@@ -80,7 +87,7 @@ function fromGrafana(rule: GrafanaAlertRule): ServiceHealthSignal {
     status: GRAFANA_STATE[rule.state],
     detail: rule.summary,
     owner: rule.labels.team,
-    observedAt: OBSERVED_AT,
+    observedAt: observedMinutesAgo(3),
   };
 }
 
@@ -121,7 +128,7 @@ function fromSentry(stats: SentryProjectStats): ServiceHealthSignal {
     status,
     detail: `${stats.unresolvedIssues} unresolved issues, ${stats.crashFreeRate.toFixed(2)}% crash-free`,
     owner: stats.team,
-    observedAt: OBSERVED_AT,
+    observedAt: observedMinutesAgo(4),
   };
 }
 
@@ -168,7 +175,7 @@ export const internalStatusMock: ServiceHealthProvider = {
       status: INTERNAL_STATE[component.status],
       detail: component.note,
       owner: component.owner,
-      observedAt: OBSERVED_AT,
+      observedAt: observedMinutesAgo(1),
     }));
   },
 };

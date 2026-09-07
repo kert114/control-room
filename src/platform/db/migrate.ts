@@ -5,10 +5,11 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import { readEnv } from "@/platform/config/env";
+import { poolConfig } from "@/platform/db/client";
 
 async function main(): Promise<void> {
   const { DATABASE_URL } = readEnv();
-  const pool = new Pool({ connectionString: DATABASE_URL, max: 1 });
+  const pool = new Pool(poolConfig(DATABASE_URL, 1));
   const database = drizzle(pool);
   await migrate(database, { migrationsFolder: "./drizzle" });
   await pool.end();

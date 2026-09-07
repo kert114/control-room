@@ -4,10 +4,17 @@ import * as React from "react";
 import type { Actor } from "@/platform/auth/session";
 import { can } from "@/platform/authz/policy";
 import { ActivityTimeline } from "@/platform/ui/activity-timeline";
+import { TruncationNotice } from "@/platform/ui/truncation-notice";
 import { Button } from "@/platform/ui/button";
 import { StatusBadge } from "@/platform/ui/status-badge";
 
-import type { ChangeRequestDetail, ChangeRequestSummary, FlagDetail } from "@/modules/flags/queries";
+import {
+  HISTORY_LIMIT,
+  REQUESTS_LIMIT,
+  type ChangeRequestDetail,
+  type ChangeRequestSummary,
+  type FlagDetail,
+} from "@/modules/flags/queries";
 import { ENVIRONMENT_LABEL, requiresChangeRequest } from "@/modules/flags/rules";
 import { describeTargetingRule, regionsFromTargeting } from "@/modules/flags/targeting";
 import { isOpen, STATUS_LABEL } from "@/modules/flags/transitions";
@@ -89,6 +96,7 @@ export function FlagDetailPanel({
               />
             ))}
           </ul>
+          <TruncationNotice shown={REQUESTS_LIMIT} total={flag.requestsTotal} noun="change requests" />
         </section>
       ) : null}
 
@@ -185,6 +193,7 @@ export function FlagDetailPanel({
           Audit history
         </h4>
         <ActivityTimeline entries={flag.history} emptyLabel="No audit events for this flag yet." />
+        <TruncationNotice shown={HISTORY_LIMIT} total={flag.historyTotal} noun="audit events" />
       </section>
     </div>
   );

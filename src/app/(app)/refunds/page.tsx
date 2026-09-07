@@ -2,10 +2,19 @@ import Link from "next/link";
 
 import { can } from "@/platform/authz/policy";
 import { requirePermission } from "@/platform/auth/session";
+import { TruncationNotice } from "@/platform/ui/truncation-notice";
 
 import { RefundsWorkspace } from "@/app/(app)/refunds/refunds-workspace";
 import { permissionForDecision } from "@/modules/refunds/decisions";
-import { getPolicy, getRefundDetail, listRefunds, summarizeRefunds, volumeByStatus } from "@/modules/refunds/queries";
+import {
+  countRefunds,
+  getPolicy,
+  getRefundDetail,
+  listRefunds,
+  REFUNDS_LIST_LIMIT,
+  summarizeRefunds,
+  volumeByStatus,
+} from "@/modules/refunds/queries";
 import {
   buildRefundsHref,
   parseListParams,
@@ -30,8 +39,9 @@ export default async function RefundsPage({
       ? 1
       : (Math.min(parsed.step, 2) as 1 | 2),
   };
-  const [list, summary, volume, detail, policy] = await Promise.all([
+  const [list, total, summary, volume, detail, policy] = await Promise.all([
     listRefunds(baseParams),
+    countRefunds(baseParams),
     summarizeRefunds(),
     volumeByStatus(),
     baseParams.refund ? getRefundDetail(baseParams.refund) : Promise.resolve(null),
@@ -66,6 +76,7 @@ export default async function RefundsPage({
           Switch to variant B
         </Link>
       </p>
+      <TruncationNotice shown={REFUNDS_LIST_LIMIT} total={total} noun="matching refunds" />
       <RefundsWorkspace
         actor={actor}
         params={params}

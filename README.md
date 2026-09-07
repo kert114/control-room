@@ -54,6 +54,10 @@ Demo accounts (only when `DEMO_MODE=true`), password `control-room-demo`:
 | `admin@demo.control-room.test` | administrator |
 | `auditor@demo.control-room.test` | auditor (read-only) |
 
+Known limitation: demo credential sign-in has no rate limiting or lockout. The
+password is shown on the sign-in page, so throttling would protect nothing;
+the real SSO path (Entra ID) carries its own protections.
+
 ## Scripts
 
 | Command | Purpose |
