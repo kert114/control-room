@@ -10,6 +10,10 @@ import {
   env,
   isEntraConfigured,
 } from "@/platform/config/env";
+import {
+  isTokenStale,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/platform/auth/refresh";
 import { db } from "@/platform/db/client";
 import { users } from "@/platform/db/schema";
 import { ROLES, type Role } from "@/platform/authz/policy";
@@ -83,7 +87,7 @@ export function buildAuthConfig(): NextAuthConfig {
   return {
     providers,
     secret: current.AUTH_SECRET,
-    session: { strategy: "jwt" },
+    session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
     pages: { signIn: "/signin" },
     trustHost: true,
     callbacks: {
@@ -104,18 +108,21 @@ export function buildAuthConfig(): NextAuthConfig {
         if (!email) {
           return token;
         }
-        if (!token.role || user) {
+        if (user || isTokenStale(token)) {
           const [account] = await db
             .select()
             .from(users)
             .where(eq(users.email, email.toLowerCase()))
             .limit(1);
-          if (account) {
-            token.sub = account.id;
-            token.name = account.name;
-            token.email = account.email;
-            token.role = account.role;
+          // Fail closed: a deactivated or deleted account loses its session.
+          if (!account?.isActive) {
+            return null;
           }
+          token.sub = account.id;
+          token.name = account.name;
+          token.email = account.email;
+          token.role = account.role;
+          token.refreshedAt = Date.now();
         }
         return token;
       },

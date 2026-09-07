@@ -1,6 +1,7 @@
 import {
   and,
   asc,
+  count,
   desc,
   eq,
   gte,
@@ -8,6 +9,7 @@ import {
   lte,
   or,
   sql,
+  type SQL,
 } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
@@ -42,9 +44,9 @@ export interface RefundListItem {
   version: number;
 }
 
-export async function listRefunds(
-  params: ListParams,
-): Promise<RefundListItem[]> {
+export const REFUNDS_LIST_LIMIT = 200;
+
+function listFilters(params: ListParams): SQL | undefined {
   const filters = [];
   if (params.q) {
     filters.push(
@@ -62,7 +64,20 @@ export async function listRefunds(
   }
   if (params.min !== undefined) filters.push(gte(refunds.amountMinor, params.min));
   if (params.max !== undefined) filters.push(lte(refunds.amountMinor, params.max));
+  return filters.length ? and(...filters) : undefined;
+}
 
+export async function countRefunds(params: ListParams): Promise<number> {
+  const [row] = await db
+    .select({ value: count() })
+    .from(refunds)
+    .where(listFilters(params));
+  return row?.value ?? 0;
+}
+
+export async function listRefunds(
+  params: ListParams,
+): Promise<RefundListItem[]> {
   const primary =
     params.sort === "amount"
       ? refunds.amountMinor
@@ -87,9 +102,9 @@ export async function listRefunds(
     })
     .from(refunds)
     .innerJoin(requester, eq(requester.id, refunds.requestedById))
-    .where(filters.length ? and(...filters) : undefined)
+    .where(listFilters(params))
     .orderBy(direction(primary), desc(refunds.createdAt), desc(refunds.id))
-    .limit(200);
+    .limit(REFUNDS_LIST_LIMIT);
 }
 
 export interface RefundHistoryEntry {

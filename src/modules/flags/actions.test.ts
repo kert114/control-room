@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -14,6 +14,7 @@ import {
   approveChangeRequest,
   cancelChangeRequest,
   createChangeRequest,
+  isReferenceCollision,
   rejectChangeRequest,
   requestKillSwitch,
   type FlagsActionResult,
@@ -103,6 +104,27 @@ const rollout = (
   reason: "Synthetic reason for the test run.",
   ticket: undefined,
   regions,
+});
+
+describe("reference collision detection", () => {
+  it("recognises the change_requests reference unique violation through a wrapped error", () => {
+    const pgError = Object.assign(new Error("duplicate key"), {
+      code: "23505",
+      constraint: "change_requests_reference_key",
+    });
+    expect(isReferenceCollision(pgError)).toBe(true);
+    expect(isReferenceCollision(new Error("wrapped", { cause: pgError }))).toBe(true);
+  });
+
+  it("ignores other database errors", () => {
+    expect(isReferenceCollision(new Error("boom"))).toBe(false);
+    expect(
+      isReferenceCollision(
+        Object.assign(new Error("other"), { code: "23505", constraint: "refunds_reference_key" }),
+      ),
+    ).toBe(false);
+    expect(isReferenceCollision("not an error")).toBe(false);
+  });
 });
 
 describe.skipIf(!hasDatabase)("flags actions (database)", () => {
@@ -361,6 +383,43 @@ describe.skipIf(!hasDatabase)("flags actions (database)", () => {
       expect(JSON.stringify(event.metadata)).not.toMatch(/incident/i);
       expect(() => assertNoSensitiveMetadata(event.metadata as AuditMetadata)).not.toThrow();
     }
+  });
+
+  it("turns a concurrent reference collision into a business_rule result, not a 500", async () => {
+    const blocked = await insertFlag("collide-a", "production");
+    const other = await insertFlag("collide-b", "production");
+    const [row] = await db
+      .select({ max: sql<number>`coalesce(max(nullif(substring(${changeRequests.reference} from 4), '')::int), 9000)` })
+      .from(changeRequests);
+    const nextReference = `CR-${Number(row?.max ?? 9000) + 1}`;
+
+    // An uncommitted writer holds the next reference while the request under test computes the same one.
+    const writer = db.transaction(async (tx) => {
+      await tx.insert(changeRequests).values({
+        reference: nextReference,
+        flagId: other.id,
+        requestedById: operator.id,
+        previousEnabled: false,
+        previousRollout: 0,
+        proposedEnabled: true,
+        proposedRollout: 10,
+        reason: "Synthetic concurrent request.",
+        kind: "rollout",
+        status: "pending_approval",
+        requiresApproval: true,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const result = fail(await createChangeRequest(operator, rollout(blocked, true, 25)));
+    await writer;
+
+    expect(result.code).toBe("business_rule");
+    expect(result.message).toMatch(/same moment/);
+    expect(await auditFor(blocked.id)).toHaveLength(0);
+    expect(
+      await db.select().from(changeRequests).where(eq(changeRequests.flagId, blocked.id)),
+    ).toHaveLength(0);
   });
 
   it("kill switch in production still needs a different approver", async () => {

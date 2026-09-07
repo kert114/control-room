@@ -21,47 +21,42 @@ export interface OverviewCounts {
 
 export async function loadOverviewCounts(): Promise<OverviewCounts> {
   const now = new Date();
+  const openKyc = sql`${kycCases.status} in ('pending_review', 'in_review', 'escalated', 'information_requested')`;
 
-  const [kycOpen] = await db
-    .select({ value: count() })
-    .from(kycCases)
-    .where(
-      sql`${kycCases.status} in ('pending_review', 'in_review', 'escalated', 'information_requested')`,
-    );
-
-  const [kycBreaching] = await db
-    .select({ value: count() })
-    .from(kycCases)
-    .where(
-      and(
-        sql`${kycCases.status} in ('pending_review', 'in_review', 'escalated', 'information_requested')`,
-        sql`${kycCases.slaDueAt} < ${now.toISOString()}`,
+  const [
+    [kycOpen],
+    [kycBreaching],
+    [refundsPending],
+    [refundsApproved],
+    [flagsProduction],
+    [pendingChanges],
+  ] = await Promise.all([
+    db.select({ value: count() }).from(kycCases).where(openKyc),
+    db
+      .select({ value: count() })
+      .from(kycCases)
+      .where(and(openKyc, sql`${kycCases.slaDueAt} < ${now.toISOString()}`)),
+    db
+      .select({ value: count() })
+      .from(refunds)
+      .where(sql`${refunds.status} in ('pending_approval', 'escalated')`),
+    db
+      .select({
+        value: sql<number>`coalesce(sum(${refunds.amountMinor}), 0)::int`,
+      })
+      .from(refunds)
+      .where(sql`${refunds.status} in ('approved', 'settled')`),
+    db
+      .select({ value: count() })
+      .from(featureFlags)
+      .where(
+        and(eq(featureFlags.environment, "production"), eq(featureFlags.enabled, true)),
       ),
-    );
-
-  const [refundsPending] = await db
-    .select({ value: count() })
-    .from(refunds)
-    .where(sql`${refunds.status} in ('pending_approval', 'escalated')`);
-
-  const [refundsApproved] = await db
-    .select({
-      value: sql<number>`coalesce(sum(${refunds.amountMinor}), 0)::int`,
-    })
-    .from(refunds)
-    .where(sql`${refunds.status} in ('approved', 'settled')`);
-
-  const [flagsProduction] = await db
-    .select({ value: count() })
-    .from(featureFlags)
-    .where(
-      and(eq(featureFlags.environment, "production"), eq(featureFlags.enabled, true)),
-    );
-
-  const [pendingChanges] = await db
-    .select({ value: count() })
-    .from(changeRequests)
-    .where(eq(changeRequests.status, "pending_approval"));
+    db
+      .select({ value: count() })
+      .from(changeRequests)
+      .where(eq(changeRequests.status, "pending_approval")),
+  ]);
 
   return {
     kycOpen: kycOpen?.value ?? 0,
@@ -106,7 +101,16 @@ export interface AuditEntry {
   metadata: Record<string, string | number | boolean | null>;
 }
 
-export async function loadAuditEntries(limit = 200): Promise<AuditEntry[]> {
+export const AUDIT_LIST_LIMIT = 200;
+
+export async function countAuditEntries(): Promise<number> {
+  const [row] = await db.select({ value: count() }).from(auditEvents);
+  return row?.value ?? 0;
+}
+
+export async function loadAuditEntries(
+  limit = AUDIT_LIST_LIMIT,
+): Promise<AuditEntry[]> {
   const rows = await db
     .select({
       id: auditEvents.id,
